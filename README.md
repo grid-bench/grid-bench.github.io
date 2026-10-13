@@ -19,7 +19,7 @@ against an executable reference world.
 | Resource | Destination | Status |
 | --- | --- | --- |
 | Website | https://grid-bench.github.io/ | Planned; not deployed |
-| Code | https://github.com/xzx34/Grid-Bench | Private prerelease |
+| Code | https://github.com/grid-bench/Grid-Bench | Private prerelease |
 | Dataset | https://huggingface.co/datasets/xzx34/Grid-Bench | Planned; not uploaded |
 | Paper | Pending confirmed public identifier | Do not invent a paper URL |
 
