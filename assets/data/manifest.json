@@ -1,0 +1,17 @@
+{
+  "generator": "tools/export_data.py",
+  "sources": {
+    "benchmark.jsonl": "b113d8007a023ffc835826a46feb77e57a31c65db12f13ee3afda9e23943d7c0",
+    "results.jsonl": "11528938a3de4ff4a6d8f1496ede64caed61391dcb1b6b28bb1b54ca47350bb4",
+    "analysis.json": "7132a6423d104220a40dcb4732f8b2e73f6f3179dafa3edc01b9f61c5448d158",
+    "overview-examples.json": "2a48ff873fc89e26f385fc137641264a3adcf128854110fac3a9d39c0147e7c0"
+  },
+  "outputs": {
+    "examples.json": "1c6993d04d79ccf13e3733278ff333685dbe1c70b60bba48a7d8ad499ccd623c",
+    "families.json": "5d37ae3dc790041e0a015ad3cb4a09b25cbdab9b5a8c5b0a3c0b9c38b58d16ad",
+    "hero.json": "6a98ee0f13c2c67c87ab98306414402a1b8401343f72475255fcc7ae7d7959fb",
+    "tesseract.json": "48f33e6e964b983c5a178253d9c1d056dd6a86d5b6cef21de6b0867075ba1532",
+    "play.json": "6a74b2b0deff46aa3bfc892530195a6f89b56d5898e93f3873e1e88a081683e8",
+    "results.json": "71774777b1cf40eb2eaf04f6bf8f6d13b33c6af8bf5ed658c9a111789e540c3f"
+  }
+}
