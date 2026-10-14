@@ -174,7 +174,7 @@
             <div class="legend heat-key" id="heat-key" aria-hidden="true"></div>
             <div class="table-scroll"><table class="heat" id="heat"></table></div>
           </div>
-          <p class="caption cap" id="board-cap">Correct complete states out of 192 main instances per length; the pooled column counts 768 instances at T&nbsp;=&nbsp;8–64.</p>
+          <p class="caption cap" id="board-cap">Share of instances answered with every cell right, at each history length. Rows are sorted by the pooled column, T&nbsp;=&nbsp;8–64.</p>
         </div>
         <a class="lb-more reveal" href="#results">What exact match does not show <span aria-hidden="true">→</span></a>
       </div>
@@ -217,8 +217,8 @@
         </header>
         <div class="ops-bar reveal">
           <div class="seg ops-dim" id="ops-dim" role="group" aria-label="World dimension">
-            <button type="button" data-dim="2" aria-pressed="true">2D <span class="ops-dim-shape">16×16</span></button>
-            <button type="button" data-dim="3" aria-pressed="false">3D <span class="ops-dim-shape">6×6×7</span></button>
+            <button type="button" data-dim="2" aria-pressed="false">2D <span class="ops-dim-shape">16×16</span></button>
+            <button type="button" data-dim="3" aria-pressed="true">3D <span class="ops-dim-shape">6×6×7</span></button>
           </div>
           <p class="ops-hint">Changed cells flash after each event. <button class="info" id="ops-info" type="button" aria-label="About these animations" aria-describedby="ops-info-note">i</button><span class="sr-only" id="ops-info-note">The first 24 events (2D) or 32 events (3D) of a 64-event benchmark trajectory, executed by the reference simulator. Core events of one family are interleaved with single-cell SET events.</span></p>
           <button class="btn btn-sm btn-ghost ops-pause" id="ops-pause" type="button" aria-label="Pause the animations">
@@ -226,7 +226,7 @@
             <span class="ops-pause-label">Pause</span>
           </button>
         </div>
-        <div class="ops" id="ops" data-dim="2"></div>
+        <div class="ops" id="ops" data-dim="3"></div>
         <div class="ops-dots" id="ops-dots" aria-hidden="true"></div>
       </div>
       <dialog class="op-dialog" id="op-dialog" aria-labelledby="dlg-title"></dialog>
@@ -414,7 +414,7 @@
           <div class="f-text">
             <span class="f-num" aria-hidden="true">1</span>
             <h3>Close at one event, far apart by eight</h3>
-            <p class="f-lead">Kimi K2.5 and MiniMax M2.5 solve more one-event instances than Claude 5 Sonnet (<b data-fact="kimi-1">148</b> and <b data-fact="minimax-1">150</b> vs. <b data-fact="claude-1">137</b> of 192), yet at T&nbsp;=&nbsp;8 Claude 5 Sonnet leads <b data-fact="claude-8">91</b> to <b data-fact="kimi-8">33</b> and <b data-fact="minimax-8">31</b>.</p>
+            <p class="f-lead">Kimi K2.5 and MiniMax M2.5 solve more one-event instances than Claude 5 Sonnet (<b data-fact="kimi-1">77.1%</b> and <b data-fact="minimax-1">78.1%</b> vs. <b data-fact="claude-1">71.4%</b>), yet at T&nbsp;=&nbsp;8 Claude 5 Sonnet leads, <b data-fact="claude-8">47.4%</b> to <b data-fact="kimi-8">17.2%</b> and <b data-fact="minimax-8">16.1%</b>.</p>
           </div>
           <div class="f-fig">
             <div class="chart-tools">
@@ -437,7 +437,7 @@
           <div class="f-text">
             <span class="f-num" aria-hidden="true">2</span>
             <h3>Similar scores, different errors</h3>
-            <p class="f-lead">Kimi K2.5 and MiniMax M2.5 are nearly tied at T&nbsp;=&nbsp;8 (<b data-fact="kimi-8">33</b> vs. <b data-fact="minimax-8">31</b> of 192), yet on the <b data-fact="pairs-n">84</b> instances where both return a valid wrong grid, their median wrong cells are <b data-fact="pairs-med-a">14</b> and <b data-fact="pairs-med-b">67</b>.</p>
+            <p class="f-lead">Kimi K2.5 and MiniMax M2.5 are nearly tied at T&nbsp;=&nbsp;8 (<b data-fact="kimi-8">17.2%</b> vs. <b data-fact="minimax-8">16.1%</b>), yet where both return a valid wrong grid (<span data-fact="pairs-share">43.8%</span> of instances), the median wrong grid misses <b data-fact="pairs-med-a">5.5%</b> of cells for Kimi K2.5 and <b data-fact="pairs-med-b">26.2%</b> for MiniMax M2.5.</p>
           </div>
           <div class="f-fig">
             <div class="chart-tools">
@@ -463,7 +463,7 @@
           <div class="f-text">
             <span class="f-num" aria-hidden="true">3</span>
             <h3>Wrong grids can still capture real change</h3>
-            <p class="f-lead">At T&nbsp;=&nbsp;64, the six models miss the exact grid on <b data-fact="wrong-64">1,111</b> of their <span data-fact="all-64">1,152</span> attempts (192 each), yet GPT-5.6 Sol's valid answers still get <b data-fact="sol-ca-64">81.6%</b> of cells right, against <b data-fact="sol-copy-64">51.0%</b> for copying the initial world.</p>
+            <p class="f-lead">At T&nbsp;=&nbsp;64, the six models miss the exact grid on <b data-fact="wrong-64">96.4%</b> of their attempts, yet GPT-5.6 Sol's valid answers still get <b data-fact="sol-ca-64">81.6%</b> of cells right, against <b data-fact="sol-copy-64">51.0%</b> for copying the initial world.</p>
           </div>
           <div class="f-fig">
             <div class="chart-tools">
@@ -486,9 +486,9 @@
         </article>
 
         <ul class="res-notes reveal" aria-label="Notes on the results">
-          <li><b>Each length is scored on its own.</b> <span id="note-prefix">A model sometimes solves a longer prefix after failing a shorter one: on 5 (GLM-5) to 51 (Claude 5 Sonnet) of 192 trajectories.</span></li>
-          <li><b>Missing answers count as wrong.</b> <span id="note-delivery">Each model got 1,488 requests; empty responses range from 0 (GLM-5) to 248 (Claude 5 Sonnet, 245 of them stopped at the length limit).</span></li>
-          <li><b>References are double-checked.</b> <span id="note-oracle">A separately written implementation of the rules recomputes all 1,488 reference states (30,008 replayed events) with 0 mismatches.</span></li>
+          <li><b>Each length is scored on its own.</b> <span id="note-prefix">A model sometimes solves a longer prefix after failing a shorter one: on 2.6% (GLM-5) to 26.6% (Claude 5 Sonnet) of trajectories.</span></li>
+          <li><b>Missing answers count as wrong.</b> <span id="note-delivery">Empty responses range from 0% of requests (GLM-5) to 16.7% (Claude 5 Sonnet; 98.8% of those stopped at the length limit).</span></li>
+          <li><b>References are double-checked.</b> <span id="note-oracle">A separately written implementation of the rules recomputes every reference state by replaying its events; 100% match.</span></li>
         </ul>
       </div>
     </section>

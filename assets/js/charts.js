@@ -27,6 +27,7 @@ const modelColor = (m) => m.color_dark;
 const opName = (id) => R.families.find((f) => f.id === id).op;
 const nameOf = (id) => MODELS.find((m) => m.id === id).name;
 const lengthRow = (id, t) => R.length.find((r) => r.model === id && r.T === t);
+const CELLS = { 2: 256, 3: 252, 4: 256 }; // cells per main-benchmark world (16×16, 6×6×7, 4×4×4×4)
 const pctRange = (lo, hi) => `${(lo * 100).toFixed(1)}–${(hi * 100).toFixed(1)}%`;
 
 // Percent of a count with one decimal. Exact ties round to even, as in the
@@ -212,20 +213,20 @@ function rowFrame(width, { top = 24, wideRow = 40, rightW = 96 } = {}) {
 // ---------- Key numbers in the copy ----------
 function facts() {
   const sol = R.baselines.find((b) => b.model === "gpt-5.6-sol" && b.T === 64);
-  const a = R.pairs.map((p) => p.a), b = R.pairs.map((p) => p.b);
   const at64 = R.length.filter((r) => r.T === 64);
+  const em = (id, t) => { const r = lengthRow(id, t); return pctCell(r.correct, r.n); };
+  const st = pairStats();
   return {
-    "wrong-64": fmt.int(at64.reduce((s, r) => s + r.n - r.correct, 0)),
-    "all-64": fmt.int(at64.reduce((s, r) => s + r.n, 0)),
-    "kimi-1": lengthRow("moonshotai.kimi-k2.5", 1).correct,
-    "minimax-1": lengthRow("minimax.minimax-m2.5", 1).correct,
-    "claude-1": lengthRow("claude-sonnet", 1).correct,
-    "claude-8": lengthRow("claude-sonnet", 8).correct,
-    "kimi-8": lengthRow("moonshotai.kimi-k2.5", 8).correct,
-    "minimax-8": lengthRow("minimax.minimax-m2.5", 8).correct,
-    "pairs-n": R.pairs.length,
-    "pairs-med-a": num(median(a)),
-    "pairs-med-b": num(median(b)),
+    "wrong-64": pctOf(at64.reduce((s, r) => s + r.n - r.correct, 0), at64.reduce((s, r) => s + r.n, 0)),
+    "kimi-1": em("moonshotai.kimi-k2.5", 1),
+    "minimax-1": em("minimax.minimax-m2.5", 1),
+    "claude-1": em("claude-sonnet", 1),
+    "claude-8": em("claude-sonnet", 8),
+    "kimi-8": em("moonshotai.kimi-k2.5", 8),
+    "minimax-8": em("minimax.minimax-m2.5", 8),
+    "pairs-share": st.share,
+    "pairs-med-a": st.medA,
+    "pairs-med-b": st.medB,
     "sol-ca-64": fmt.pct(sol.model_ca),
     "sol-copy-64": fmt.pct(sol.copy_ca),
   };
@@ -536,11 +537,10 @@ function lengthChart(width) {
     cross.setAttribute("x2", x(k));
     cross.setAttribute("visibility", "visible");
     const rows = visible.map((s) => ({ s, r: s.rows[k] })).sort((a, b) => b.r.em - a.r.em);
-    const n = rows[0]?.r.n;
     showTip(e.clientX, e.clientY, [
       tipTitle(`T = ${LENGTHS[k]} · ${scopeLabel()}`),
-      ...rows.map(({ s, r }) => tipRow(modelColor(s.m), s.m.name, `${pctOf(r.correct, r.n)} · ${r.correct}/${r.n}`)),
-      tipSub(lenState.view === "overall" ? `n = ${n} instances per model; 95% trajectory-bootstrap intervals shaded` : `n = ${n} instances per model`),
+      ...rows.map(({ s, r }) => tipRow(modelColor(s.m), s.m.name, pctCell(r.correct, r.n))),
+      ...(lenState.view === "overall" ? [tipSub("95% trajectory-bootstrap intervals shaded")] : []),
     ]);
   }, () => { cross.setAttribute("visibility", "hidden"); hideTip(); });
   return root;
@@ -553,7 +553,7 @@ function lengthTable() {
   t.append(el("thead", {}, [el("tr", {}, [el("th", { scope: "col", text: "Model" }), ...LENGTHS.map((x) => el("th", { scope: "col", text: `T = ${x}` }))])]));
   t.append(el("tbody", {}, series.map((s) => el("tr", {}, [
     el("th", { scope: "row", text: s.m.name }),
-    ...s.rows.map((r) => el("td", { text: `${r.correct}/${r.n}${lenState.view === "overall" && r.T > 0 && r.lo !== r.hi ? ` [${Math.round(r.lo * 100)}–${Math.round(r.hi * 100)}%]` : ""}` })),
+    ...s.rows.map((r) => el("td", { text: `${pctCell(r.correct, r.n)}${lenState.view === "overall" && r.T > 0 && r.lo !== r.hi ? ` [${Math.round(r.lo * 100)}–${Math.round(r.hi * 100)}%]` : ""}` })),
   ]))));
   return el("div", { class: "table-scroll" }, [t]);
 }
@@ -561,14 +561,14 @@ function lengthTable() {
 function lengthCaption() {
   const cap = document.getElementById("len-cap");
   if (lenState.view === "overall") {
-    caption(cap, "192 instances per model and length; shaded bands are 95% intervals.",
-      "Main benchmark: one instance per trajectory at each length. Intervals come from 2,000 stratified whole-trajectory bootstrap replicates.");
+    caption(cap, "Exact match at each history length on the main benchmark; shaded bands are 95% intervals.",
+      "One instance per trajectory at each length. Intervals come from a stratified whole-trajectory bootstrap.");
   } else if (lenState.view === "dimension") {
-    caption(cap, `d = ${lenState.sub}: 64 instances per model and length (8 operations × 8 trajectories).`,
+    caption(cap, `Exact match at each history length, d = ${lenState.sub}; each point pools all eight operations.`,
       "Dimension changes geometry, boundary exposure, coordinate arity, and representation length together.");
   } else {
-    caption(cap, `${scopeLabel()}: 24 instances per model and length (3 dimensions × 8 trajectories).`,
-      "Small per-operation counts describe the sampled conditions; avoid reading them as precise rankings.");
+    caption(cap, `Exact match at each history length, ${scopeLabel()}; each point pools all three dimensions.`,
+      "Per-operation samples are small and describe the sampled conditions; avoid reading them as precise rankings.");
   }
 }
 
@@ -670,7 +670,7 @@ function extentChart(width) {
   const f = rowFrame(width, { top: 22, wideRow: 40, rightW: 104 });
   const H = f.bottom + 40;
   const root = svg("svg", { width, height: H, viewBox: `0 0 ${width} ${H}`, role: "img", "aria-label": "Median wrong cells per model at T = 1, 16, and 64" });
-  root.append(svg("text", { x: width, y: 11, "text-anchor": "end", class: "dlabel head", text: "n at T = 1 / 16 / 64" }));
+  root.append(svg("text", { x: width, y: 11, "text-anchor": "end", class: "dlabel head", text: "valid wrong, T = 1 / 16 / 64" }));
   const axis = svg("g", { class: "axis" });
   [1, 4, 16, 64, 256].forEach((v) => {
     const xx = logX(v, f.x0, f.x1);
@@ -684,13 +684,13 @@ function extentChart(width) {
     const cy = f.cy(k);
     root.append(f.nameAt(k, m.name));
     const recs = EXTENT_T.map(([t, shape, dy]) => ({ t, shape, dy, r: R.errors.find((e) => e.model === m.id && e.T === t) }));
-    root.append(f.rightAt(k, recs.map((x) => x.r.valid_wrong_n).join(" / ")));
+    root.append(f.rightAt(k, `${recs.map((x) => pctWhole(x.r.valid_wrong_n, x.r.n).slice(0, -1)).join(" / ")}%`));
     const pts = recs.filter((x) => x.r.median != null).map((x) => `${logX(x.r.median, f.x0, f.x1)},${cy + x.dy}`);
     if (pts.length > 1) root.append(svg("polyline", { points: pts.join(" "), fill: "none", stroke: modelColor(m), "stroke-width": 2, opacity: 0.35, "stroke-linecap": "round", "stroke-linejoin": "round" }));
     for (const { t, shape, dy, r } of recs) {
       if (r.median == null) continue;
       const cx = logX(r.median, f.x0, f.x1);
-      const g = svg("g", { tabindex: "0", role: "img", "aria-label": `${m.name}, T = ${t}: median ${num(r.median)} wrong cells among ${r.valid_wrong_n} valid incorrect answers` });
+      const g = svg("g", { tabindex: "0", role: "img", "aria-label": `${m.name}, T = ${t}: median ${num(r.median)} wrong cells among valid incorrect answers (${pctCell(r.valid_wrong_n, r.n)} of answers)` });
       g.append(svg("circle", { cx, cy: cy + dy, r: 9, fill: "transparent" }));
       g.append(marker(shape, cx, cy + dy, 5, modelColor(m)));
       const content = () => [
@@ -698,8 +698,8 @@ function extentChart(width) {
         tipRow(modelColor(m), "median wrong cells", num(r.median)),
         tipRow(null, "IQR", `${num(r.q25)}–${num(r.q75)}`),
         tipRow(null, "P90", num(r.p90)),
-        tipRow(null, "within 5 cells", `${r.near5}/${r.valid_wrong_n}`),
-        tipSub(`${r.valid_wrong_n} valid incorrect answers of ${r.n}`),
+        tipRow(null, "within 5 cells", pctOf(r.near5, r.valid_wrong_n)),
+        tipSub(`Valid incorrect answers: ${pctCell(r.valid_wrong_n, r.n)} of all answers`),
       ];
       hover(g, (e) => showTip(e.clientX, e.clientY, content()));
       focusTip(g, content, "Arrow keys move between markers.");
@@ -718,15 +718,20 @@ function extentLegend() {
 }
 
 // ---------- Finding 2b: shared-instance scatter ----------
+// Wrong cells as a share of the instance's world (256 cells in 2D and 4D, 252 in 3D).
+const shareA = (p) => p.a / CELLS[p.d];
+const shareB = (p) => p.b / CELLS[p.d];
+
 function pairStats() {
   const p = R.pairs;
+  const of = (k) => pctOf(k, p.length);
   return {
-    n: p.length,
-    medA: num(median(p.map((x) => x.a))),
-    medB: num(median(p.map((x) => x.b))),
-    fewer: p.filter((x) => x.a < x.b).length,
-    equal: p.filter((x) => x.a === x.b).length,
-    more: p.filter((x) => x.a > x.b).length,
+    share: pctOf(p.length, lengthRow("moonshotai.kimi-k2.5", 8).n),
+    medA: fmt.pct(median(p.map(shareA))),
+    medB: fmt.pct(median(p.map(shareB))),
+    fewer: of(p.filter((x) => x.a < x.b).length),
+    equal: of(p.filter((x) => x.a === x.b).length),
+    more: of(p.filter((x) => x.a > x.b).length),
   };
 }
 
@@ -741,23 +746,25 @@ function pairChart(width) {
   const H = Math.round(Math.max(300, Math.min(340, width * 0.45)));
   const pad = { l: compact ? 44 : 50, r: 12, t: 10, b: 46 };
   const iw = width - pad.l - pad.r, ih = H - pad.t - pad.b;
-  const sx = (v) => pad.l + (Math.log2(Math.max(1, v)) / 8) * iw;
-  const sy = (v) => pad.t + (1 - Math.log2(Math.max(1, v)) / 8) * ih;
-  const st = pairStats();
-  const root = svg("svg", { width, height: H, viewBox: `0 0 ${width} ${H}`, role: "img", "aria-label": `Wrong cells of Kimi K2.5 versus MiniMax M2.5 on ${st.n} shared instances at T = 8` });
+  // Log scales over shares of the world, from one cell in 256 to the whole world.
+  const lg = (v) => Math.log2(Math.max(1 / 256, v) * 256) / 8;
+  const sx = (v) => pad.l + lg(v) * iw;
+  const sy = (v) => pad.t + (1 - lg(v)) * ih;
+  const root = svg("svg", { width, height: H, viewBox: `0 0 ${width} ${H}`, role: "img", "aria-label": "Share of cells wrong, Kimi K2.5 versus MiniMax M2.5, on shared instances at T = 8" });
   const axis = svg("g", { class: "axis" });
-  [1, 4, 16, 64, 256].forEach((v) => {
+  (compact ? [0.01, 0.1, 1] : [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1]).forEach((v) => {
+    const label = `${+(v * 100).toFixed(1)}%`;
     axis.append(svg("line", { x1: sx(v), x2: sx(v), y1: pad.t, y2: pad.t + ih, class: "gridline" }));
     axis.append(svg("line", { x1: pad.l, x2: pad.l + iw, y1: sy(v), y2: sy(v), class: "gridline" }));
-    axis.append(svg("text", { x: sx(v), y: pad.t + ih + 18, "text-anchor": "middle", text: v }));
-    axis.append(svg("text", { x: pad.l - 8, y: sy(v) + 4, "text-anchor": "end", text: v }));
+    axis.append(svg("text", { x: sx(v), y: pad.t + ih + 18, "text-anchor": "middle", text: label }));
+    axis.append(svg("text", { x: pad.l - 8, y: sy(v) + 4, "text-anchor": "end", text: label }));
   });
   root.append(axis);
-  root.append(svg("line", { x1: sx(1), y1: sy(1), x2: sx(256), y2: sy(256), stroke: MUTED, "stroke-width": 1.25, opacity: 0.7 }));
-  root.append(svg("text", { x: pad.l + iw / 2, y: H - 6, "text-anchor": "middle", class: "axis-title", text: "Kimi K2.5 wrong cells" }));
-  root.append(svg("text", { x: 12, y: pad.t + ih / 2, "text-anchor": "middle", class: "axis-title", transform: `rotate(-90 12 ${pad.t + ih / 2})`, text: "MiniMax M2.5 wrong cells" }));
-  root.append(svg("text", { x: sx(2.2), y: sy(2.2) + 14, "text-anchor": "middle", class: "dlabel head", transform: `rotate(${-Math.atan2(ih, iw) * 180 / Math.PI} ${sx(2.2)} ${sy(2.2) + 14})`, text: "equal" }));
-  const pts = R.pairs.map((p) => ({ p, x: sx(p.a), y: sy(p.b) }));
+  root.append(svg("line", { x1: sx(1 / 256), y1: sy(1 / 256), x2: sx(1), y2: sy(1), stroke: MUTED, "stroke-width": 1.25, opacity: 0.7 }));
+  root.append(svg("text", { x: pad.l + iw / 2, y: H - 6, "text-anchor": "middle", class: "axis-title", text: "Kimi K2.5: cells wrong" }));
+  root.append(svg("text", { x: 12, y: pad.t + ih / 2, "text-anchor": "middle", class: "axis-title", transform: `rotate(-90 12 ${pad.t + ih / 2})`, text: "MiniMax M2.5: cells wrong" }));
+  root.append(svg("text", { x: sx(2.2 / 256), y: sy(2.2 / 256) + 14, "text-anchor": "middle", class: "dlabel head", transform: `rotate(${-Math.atan2(ih, iw) * 180 / Math.PI} ${sx(2.2 / 256)} ${sy(2.2 / 256) + 14})`, text: "equal" }));
+  const pts = R.pairs.map((p) => ({ p, x: sx(shareA(p)), y: sy(shareB(p)) }));
   for (const { p, x, y } of pts) root.append(svg("circle", { cx: x, cy: y, r: 4.5, fill: pairColor(p), "fill-opacity": 0.8, stroke: SURFACE, "stroke-width": 1.5 }));
   const hl = svg("circle", { r: 7, fill: "none", stroke: "#35d0f0", "stroke-width": 2, cx: -20, cy: -20, visibility: "hidden", "pointer-events": "none" });
   root.append(hl);
@@ -774,12 +781,12 @@ function pairChart(width) {
     }
     if (!best) { clear(); return; }
     hl.setAttribute("cx", best.x); hl.setAttribute("cy", best.y); hl.setAttribute("visibility", "visible");
-    const same = pts.filter((q) => q.p.a === best.p.a && q.p.b === best.p.b).length;
+    const same = pts.filter((q) => q.x === best.x && q.y === best.y).length;
     showTip(e.clientX, e.clientY, [
       tipTitle(`${best.p.op} · d = ${best.p.d} · T = 8`),
-      tipRow(modelColor(MODELS.find((m) => m.id === "moonshotai.kimi-k2.5")), "Kimi K2.5", `${best.p.a} wrong`),
-      tipRow(modelColor(MODELS.find((m) => m.id === "minimax.minimax-m2.5")), "MiniMax M2.5", `${best.p.b} wrong`),
-      tipSub(best.p.id.replace(/^main:/, "") + (same > 1 ? ` · ${same} instances at this point` : "")),
+      tipRow(modelColor(MODELS.find((m) => m.id === "moonshotai.kimi-k2.5")), "Kimi K2.5", `${fmt.pct(shareA(best.p))} of cells wrong`),
+      tipRow(modelColor(MODELS.find((m) => m.id === "minimax.minimax-m2.5")), "MiniMax M2.5", `${fmt.pct(shareB(best.p))} of cells wrong`),
+      tipSub(best.p.id.replace(/^main:/, "") + (same > 1 ? " · more instances at this point" : "")),
     ]);
   }, clear);
   return root;
@@ -810,7 +817,7 @@ function baseChart(width) {
   });
   root.append(axis);
   root.append(svg("text", { x: (sx(lo) + sx(hi)) / 2, y: H - 4, "text-anchor": "middle", class: "axis-title", text: "Cell accuracy (%)" }));
-  root.append(svg("text", { x: width, y: 11, "text-anchor": "end", class: "dlabel head", text: "above copy / valid" }));
+  root.append(svg("text", { x: width, y: 11, "text-anchor": "end", class: "dlabel head", text: "beat copy" }));
   rows.forEach(({ m, r }, k) => {
     const cy = f.cy(k);
     root.append(f.nameAt(k, m.name));
@@ -818,14 +825,14 @@ function baseChart(width) {
     root.append(zeroMark(sx(r.zero_ca), cy));
     root.append(copyMark(sx(r.copy_ca), cy));
     root.append(marker(m.marker, sx(r.model_ca), cy, 5.2, modelColor(m)));
-    root.append(f.rightAt(k, `${r.above_copy}/${r.valid_n}`));
+    root.append(f.rightAt(k, pctOf(r.above_copy, r.valid_n)));
     const content = () => [
       tipTitle(`${m.name} · T = 64`),
       tipRow(modelColor(m), "model", fmt.pct(r.model_ca)),
       tipRow(BASE_GRAY, "copy initial", fmt.pct(r.copy_ca)),
       tipRow(null, "all zero", fmt.pct(r.zero_ca)),
-      tipRow(null, "above copy", `${r.above_copy}/${r.valid_n}`),
-      tipSub(`${r.valid_n} valid answers of ${r.n}; baselines on the same subset`),
+      tipRow(null, "beat copy", pctOf(r.above_copy, r.valid_n)),
+      tipSub(`Valid answers: ${pctCell(r.valid_n, r.n)} of all; baselines on the same subset`),
     ];
     const hit = svg("rect", { x: f.compact ? 0 : f.x0 - 6, y: cy - f.rowH / 2 - (f.compact ? 8 : 0), width: f.compact ? width : f.x1 - f.x0 + 12, height: f.rowH, rx: 8, fill: "transparent", tabindex: "0", role: "img", "aria-label": `${m.name}: cell accuracy ${fmt.pct(r.model_ca)}, copy initial ${fmt.pct(r.copy_ca)}, all zero ${fmt.pct(r.zero_ca)}` });
     hover(hit, (e) => showTip(e.clientX, e.clientY, content()));
@@ -861,9 +868,10 @@ const CU = [
 const CU_COLORS = ["#35d0f0", "#e0a43a", "#8b7cf6"];
 
 function cuChart(width) {
-  const f = rowFrame(width, { top: 4, wideRow: 34, rightW: 58 });
+  const f = rowFrame(width, { top: 22, wideRow: 34, rightW: 58 });
   const H = f.bottom + 26;
   const root = svg("svg", { width, height: H, viewBox: `0 0 ${width} ${H}`, role: "img", "aria-label": `Error composition at T = ${cuState.T}` });
+  root.append(svg("text", { x: width, y: 11, "text-anchor": "end", class: "dlabel head", text: "valid wrong" }));
   const axis = svg("g", { class: "axis" });
   [0, 0.5, 1].forEach((v) => {
     const xx = f.x0 + v * (f.x1 - f.x0);
@@ -875,13 +883,13 @@ function cuChart(width) {
     const cy = f.cy(k);
     root.append(f.nameAt(k, m.name));
     const total = r.valid_wrong_n;
-    root.append(f.rightAt(k, `n = ${total}`));
+    root.append(f.rightAt(k, pctWhole(total, r.n)));
     if (!total) return;
     let acc = 0;
     const content = () => [
       tipTitle(`${m.name} · T = ${cuState.T}`),
-      ...CU.map(([kk, ll], jj) => tipRow(CU_COLORS[jj], ll, String(r[kk]))),
-      tipSub(`${total} valid incorrect answers`),
+      ...CU.map(([kk, ll], jj) => tipRow(CU_COLORS[jj], ll, pctOf(r[kk], total))),
+      tipSub(`Shares of valid incorrect answers (${pctCell(total, r.n)} of all answers)`),
     ];
     CU.forEach(([key], j) => {
       const v = r[key];
@@ -891,13 +899,13 @@ function cuChart(width) {
       if (w <= 0) return;
       const seg = svg("rect", { x: xs + (j ? 1 : 0), y: cy - 9, width: Math.max(0.5, w - (j ? 1 : 0) - (j < 2 ? 1 : 0)), height: 18, rx: 3, fill: CU_COLORS[j] });
       root.append(seg);
-      const txt = String(v);
+      const txt = pctWhole(v, total);
       if (w > txt.length * 7.5 + 10) {
         root.append(svg("text", { x: xs + w / 2, y: cy + 4, "text-anchor": "middle", "font-size": 11, "font-weight": 600, fill: inkOn(CU_COLORS[j]), "pointer-events": "none", text: txt }));
       }
       hover(seg, (e) => showTip(e.clientX, e.clientY, content()));
     });
-    const focus = svg("rect", { x: f.x0, y: cy - 10, width: f.x1 - f.x0, height: 20, fill: "transparent", "pointer-events": "none", tabindex: "0", role: "img", "aria-label": `${m.name}, T = ${cuState.T}: ${CU.map(([kk, ll]) => `${ll.split(" · ")[0]} ${r[kk]}`).join(", ")} of ${total}` });
+    const focus = svg("rect", { x: f.x0, y: cy - 10, width: f.x1 - f.x0, height: 20, fill: "transparent", "pointer-events": "none", tabindex: "0", role: "img", "aria-label": `${m.name}, T = ${cuState.T}: ${CU.map(([kk, ll]) => `${ll.split(" · ")[0]} ${pctOf(r[kk], total)}`).join(", ")} of valid incorrect answers` });
     focusTip(focus, content);
     root.append(focus);
   });
@@ -925,16 +933,16 @@ function notes() {
   const pre = R.prefix.slice().sort((a, b) => a.wrong_then_correct - b.wrong_then_correct);
   const lo = pre[0], hi = pre[pre.length - 1];
   document.getElementById("note-prefix").textContent =
-    `A model sometimes solves a longer prefix after failing a shorter one: on ${lo.wrong_then_correct} (${nameOf(lo.model)}) to ${hi.wrong_then_correct} (${nameOf(hi.model)}) of ${lo.n} trajectories.`;
+    `A model sometimes solves a longer prefix after failing a shorter one: on ${pctOf(lo.wrong_then_correct, lo.n)} (${nameOf(lo.model)}) to ${pctOf(hi.wrong_then_correct, hi.n)} (${nameOf(hi.model)}) of trajectories.`;
   const d = R.delivery;
   const most = d.slice().sort((a, b) => b.empty - a.empty)[0];
   const least = d.slice().sort((a, b) => a.empty - b.empty)[0];
   document.getElementById("note-delivery").textContent =
-    `Each model got ${fmt.int(d[0].n)} requests; empty responses range from ${least.empty} (${nameOf(least.model)}) to ${most.empty} (${nameOf(most.model)}, ${most.length_terminated} of them stopped at the length limit).`;
+    `Empty responses range from ${least.empty ? pctOf(least.empty, least.n) : "0%"} of requests (${nameOf(least.model)}) to ${pctOf(most.empty, most.n)} (${nameOf(most.model)}; ${pctOf(most.length_terminated, most.empty)} of those stopped at the length limit).`;
   const g = R.totals.gold_checks;
   const total = (k) => g.reduce((s, x) => s + x[k], 0);
   document.getElementById("note-oracle").textContent =
-    `A separately written implementation of the rules recomputes all ${fmt.int(total("selected_states"))} reference states (${fmt.int(total("replayed_events"))} replayed events) with ${total("mismatches")} mismatches.`;
+    `A separately written implementation of the rules recomputes every reference state by replaying its events; ${pctCell(total("selected_states") - total("mismatches"), total("selected_states"))} match.`;
 }
 
 export function initCharts(results) {
@@ -948,22 +956,22 @@ export function initCharts(results) {
 
   extentLegend();
   responsive(document.getElementById("extent-chart"), extentChart);
-  caption(document.getElementById("extent-cap"), "Median wrong cells among valid incorrect answers on the main benchmark; n counts those answers.",
-    "Hover a marker for the IQR, P90, and answers within 5 cells. These outcome-selected statistics complement exact match on the full set.");
+  caption(document.getElementById("extent-cap"), "Median wrong cells among valid incorrect answers on the main benchmark; the right column gives those answers' share of all answers.",
+    "Hover a marker for the IQR, P90, and the share within 5 cells. These outcome-selected statistics complement exact match on the full set.");
   pairLegend();
   responsive(document.getElementById("pair-chart"), pairChart);
   const st = pairStats();
-  caption(document.getElementById("pair-cap"), `The ${st.n} main instances where both models return a valid incorrect state at T = 8, on log scales.`,
-    `Medians ${st.medA} versus ${st.medB}. Kimi K2.5 has fewer wrong cells on ${st.fewer}, equal on ${st.equal}, and more on ${st.more}. Exact match on the full set: Kimi K2.5 ${lengthRow("moonshotai.kimi-k2.5", 8).correct}/192, MiniMax M2.5 ${lengthRow("minimax.minimax-m2.5", 8).correct}/192.`);
+  caption(document.getElementById("pair-cap"), `Share of cells wrong on the main instances where both models return a valid incorrect state at T = 8 (${st.share} of instances), on log scales.`,
+    `Medians ${st.medA} versus ${st.medB} of cells. Kimi K2.5 has fewer wrong cells on ${st.fewer} of these instances, as many on ${st.equal}, and more on ${st.more}. Exact match on the full set: Kimi K2.5 ${facts()["kimi-8"]}, MiniMax M2.5 ${facts()["minimax-8"]}.`);
   initTabs(document.getElementById("f2-tabs"));
 
   baseLegend();
   responsive(document.getElementById("base-chart"), baseChart);
   caption(document.getElementById("base-cap"), "Mean cell accuracy of each model's valid T = 64 answers; baselines use the same subset.",
-    "The right column counts answers above the copy-initial baseline out of each model's valid answers (of 192). Neither baseline solves any of the 960 positive-length main instances.");
+    "The right column gives the share of each model's valid answers that beat the copy-initial baseline. Neither baseline solves any positive-length main instance exactly.");
   const cuRun = responsive(document.getElementById("cu-chart"), cuChart);
   cuLegend(cuRun);
-  caption(document.getElementById("cu-cap"), "Valid incorrect answers by where their wrong cells fall: changed cells (C), unchanged cells (U), or both.",
+  caption(document.getElementById("cu-cap"), "Valid incorrect answers by where their wrong cells fall: changed cells (C), unchanged cells (U), or both. The right column gives those answers' share of all answers.",
     "C holds cells whose reference final value differs from the initial value; U holds cells whose final value is unchanged. At T = 64 most failures combine both kinds.");
   initTabs(document.getElementById("f3-tabs"));
 

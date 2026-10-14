@@ -44,8 +44,8 @@ A static site with no build step and no runtime dependencies beyond Google Fonts
 | `assets/js/voxel.js` | 3D voxel renderer for reference trajectories |
 | `assets/js/grid2d.js` | Canvas renderer for 2D worlds and 4D slice arrays |
 | `assets/js/why.js` | 02 figure: the paper's Figure 1 history, W0 to W3 |
-| `assets/js/charts.js` | 01 leaderboard (percentages only) and 06 findings |
-| `assets/js/families.js` | 03 eight operation cards and rule dialogs |
+| `assets/js/charts.js` | 01 leaderboard and 06 findings (rates as percentages, not counts) |
+| `assets/js/families.js` | 03 eight operation cards (3D by default, 2D on request) and rule dialogs |
 | `assets/js/task.js` | 04 one instance, start to finish |
 | `assets/js/coverage.js` | 05 three geometries, prefixes, design formula |
 | `assets/js/play.js` | 07 practice puzzles |

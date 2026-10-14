@@ -482,6 +482,8 @@ export function initFamilies(data, hero) {
     kick();
   };
   dimBtns.forEach((b) => b.addEventListener("click", () => setDim(Number(b.dataset.dim))));
+  // Cards open in 3D (each builds its voxel world on first view); the switch returns to 2D.
+  setDim(S.cards.some((c) => c.w3) ? 3 : 2);
 
   // Pause / play for every card (starts paused under reduced motion).
   const pause = document.getElementById("ops-pause");
