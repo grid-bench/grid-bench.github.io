@@ -215,6 +215,34 @@ function initHero(hero) {
   showWorld();
 }
 
+// Affiliation strip: repeat the logo list until the track covers the strip plus one copy,
+// then drift left by exactly one copy per cycle so the loop has no seam. Copies are hidden
+// from assistive tech; the first list keeps the names.
+function initAffil() {
+  const box = document.getElementById("affil-marquee");
+  if (!box || reducedMotion()) return;
+  const track = box.firstElementChild;
+  const list = track.firstElementChild;
+  let last = 0;
+  const fill = () => {
+    const w = list.getBoundingClientRect().width;
+    if (!w || Math.abs(box.clientWidth - last) < 1) return;
+    last = box.clientWidth;
+    while (track.children.length > 1) track.lastElementChild.remove();
+    for (let k = Math.ceil(box.clientWidth / w); k > 0; k--) {
+      const copy = list.cloneNode(true);
+      copy.removeAttribute("aria-labelledby");
+      copy.setAttribute("aria-hidden", "true");
+      copy.querySelectorAll("img").forEach((img) => { img.alt = ""; });
+      track.append(copy);
+    }
+    track.style.setProperty("--shift", `${-w}px`);
+    track.style.setProperty("--dur", `${(w / 34).toFixed(1)}s`);
+  };
+  new ResizeObserver(fill).observe(box);
+  onVisible(box, (on) => box.classList.toggle("is-off", !on), "0px");
+}
+
 async function load(name) {
   const res = await fetch(`assets/data/${name}.json`);
   if (!res.ok) throw new Error(`Failed to load ${name}: ${res.status}`);
@@ -230,6 +258,7 @@ async function main() {
   initBackdrop(document.getElementById("backdrop"));
   initNav();
   initCopy();
+  guard("affiliations", initAffil);
   observeReveal();
 
   const [hero, examples, families, tesseract, play, results] = await Promise.all(

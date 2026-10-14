@@ -188,14 +188,30 @@ button { font: inherit; color: inherit; }
 .world-caption { margin-top: 14px; font-size: 12.5px; color: var(--muted); text-align: center; }
 @media (hover: none), (pointer: coarse) { .drag-hint { display: none; } }
 
-/* Affiliations: optically balanced monochrome logos in the paper's order; no logo is emphasized. */
-.affil { margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 18px 36px; flex-wrap: wrap; }
-.affil-label { margin: 0; font-size: 13px; color: var(--muted); }
-.affil-logos { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 18px 40px; flex: 1; }
-.affil-logos img { height: var(--h, 26px); width: auto; opacity: .62; transition: opacity .2s; }
-.affil-logos li:hover img { opacity: .95; }
-.affil-more { font-size: 13.5px; color: var(--text-2); text-decoration: none; white-space: nowrap; }
-.affil-more:hover { color: var(--text); }
+/* Affiliations: full-colour logos on light tiles (each brand's light-background version),
+   in the paper's order, drifting left in a loop. main.js clones the list to fill the strip;
+   hover pauses it, and reduced motion shows one static, wrapping row. */
+.affil { margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 18px 32px; }
+.affil-label { margin: 0; flex: none; font-size: 13px; color: var(--muted); }
+.affil-marquee {
+  flex: 1; min-width: 0; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.affil-track { display: flex; width: max-content; animation: affil-drift var(--dur, 30s) linear infinite; }
+.affil-marquee:hover .affil-track, .affil-marquee.is-off .affil-track { animation-play-state: paused; }
+@keyframes affil-drift { to { transform: translateX(var(--shift, -50%)); } }
+.affil-logos { list-style: none; margin: 0; padding: 0 14px 0 0; display: flex; align-items: center; gap: 14px; }
+.affil-logos li {
+  flex: none; height: 64px; padding: 0 28px; border-radius: 14px; background: #eef1f5;
+  display: flex; align-items: center; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6);
+}
+.affil-logos img { display: block; height: var(--h, 26px); width: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .affil-marquee { -webkit-mask-image: none; mask-image: none; }
+  .affil-track { width: auto; }
+  .affil-logos { flex-wrap: wrap; padding: 0; }
+}
 
 /* ---------- Sections ---------- */
 section.block { padding: 120px 0 0; }
@@ -324,6 +340,10 @@ body > footer { margin-top: 140px; border-top: 1px solid var(--line); padding: 3
 }
 
 /* ---------- Responsive ---------- */
+/* Phones: the moving strip runs edge to edge (the static, reduced-motion row stays in the gutter). */
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .affil-marquee { margin: 0 calc(-1 * var(--gutter)); }
+}
 @media (max-width: 980px) {
   .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .hero { padding-top: 112px; }
@@ -345,9 +365,10 @@ body > footer { margin-top: 140px; border-top: 1px solid var(--line); padding: 3
   .hero-cta .btn { flex: 1 1 100%; justify-content: center; }
   .res { width: 100%; justify-content: center; }
   .res-item { padding: 0 9px; }
-  .affil { margin-top: 44px; gap: 18px; flex-direction: column; align-items: flex-start; }
-  .affil-logos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 20px; width: 100%; align-items: center; }
-  .affil-logos img { height: calc(var(--h, 26px) * 0.82); max-width: 100%; }
+  .affil { margin-top: 44px; gap: 14px; flex-direction: column; align-items: stretch; }
+  .affil-logos { gap: 10px; padding-right: 10px; }
+  .affil-logos li { height: 54px; padding: 0 20px; border-radius: 12px; }
+  .affil-logos img { height: calc(var(--h, 26px) * 0.84); }
   .win-log { height: 76px; font-size: 11px; }
   .win-src { display: none; }
   .win-tools button { width: 36px; height: 36px; }

@@ -1,4 +1,4 @@
-// Sections 02 and 06: leaderboard (overall + breakdown views) and the three findings.
+// Sections 01 and 06: leaderboard (overall + breakdown views) and the three findings.
 // All values come from assets/data/results.json (frozen analysis snapshot).
 
 import { el, fmt, hideTip, inkOn, ramp, showTip, svg, tipRow, tipSub, tipTitle } from "./util.js";
@@ -37,6 +37,14 @@ function pctOf(k, n) {
   const r2 = 2 * (k * 1000 - q * n);
   const t = r2 > n || (r2 === n && q % 2) ? q + 1 : q;
   return `${(t / 10).toFixed(1)}%`;
+}
+// Leaderboard cells: one decimal, but a full score reads "100%".
+const pctCell = (k, n) => (n && k === n ? "100%" : pctOf(k, n));
+// Heatmap cells: whole percent; a nonzero share below 0.5% reads "<1%", not "0%".
+function pctWhole(k, n) {
+  if (!n || !k) return "0%";
+  const p = (k * 100) / n;
+  return p < 0.5 ? "<1%" : `${Math.round(p)}%`;
 }
 
 function median(xs) {
@@ -247,7 +255,7 @@ function sparkline(m, rows, w) {
   const col = modelColor(m);
   const root = svg("svg", {
     width: w, height: H, viewBox: `0 0 ${w} ${H}`, class: "spark-svg", role: "img",
-    "aria-label": `${m.name}: ${rows.map((r) => r.correct).join(", ")} of 192 correct at T = ${LENGTHS.join(", ")}`,
+    "aria-label": `${m.name}: exact match ${rows.map((r) => pctCell(r.correct, r.n)).join(", ")} at T = ${LENGTHS.join(", ")}`,
   });
   root.append(svg("line", { x1: x(0), x2: x(LENGTHS.length - 1), y1: y(0), y2: y(0), class: "baseline" }));
   const pts = rows.map((r, k) => `${x(k)},${y(r.em)}`);
@@ -267,7 +275,7 @@ function sparkline(m, rows, w) {
     hl.setAttribute("cx", x(k)); hl.setAttribute("cy", y(r.em)); hl.setAttribute("visibility", "visible");
     showTip(e.clientX, e.clientY, [
       tipTitle(`${m.name} · T = ${r.T}`),
-      tipRow(col, "exact match", `${r.correct}/${r.n} · ${pctOf(r.correct, r.n)}`),
+      tipRow(col, "exact match", pctCell(r.correct, r.n)),
       ...(r.lo != null ? [tipRow(null, "95% interval", pctRange(r.lo, r.hi))] : []),
     ]);
   }, () => { hl.setAttribute("visibility", "hidden"); hideTip(); });
@@ -280,7 +288,7 @@ function leaderboard() {
     el("th", { scope: "col", class: "c-model", text: "Model" }),
     el("th", { scope: "col", class: "c-spark", text: "Exact match, T = 0 → 64" }),
     ...LENGTHS.map((t) => el("th", { scope: "col", class: "c-n" }, [el("span", { class: "t-pre", text: "T = " }), String(t)])),
-    el("th", { scope: "col", class: "c-pool", text: "Pooled T = 8–64 (of 768)" }),
+    el("th", { scope: "col", class: "c-pool", text: "Pooled, T = 8–64" }),
   ]);
   const sparks = [];
   const body = BOARD.map((m) => {
@@ -289,10 +297,10 @@ function leaderboard() {
     const pooledN = POOLED.reduce((s, t) => s + lengthRow(m.id, t).n, 0);
     const box = el("div", { class: "spark" });
     const cells = rows.map((r) => {
-      const td = el("td", { class: "c-n", "data-t": `T=${r.T}` }, [el("span", { text: String(r.correct) })]);
+      const td = el("td", { class: "c-n", "data-t": `T=${r.T}` }, [el("span", { text: pctCell(r.correct, r.n) })]);
       hover(td, (e) => showTip(e.clientX, e.clientY, [
         tipTitle(`${m.name} · T = ${r.T}`),
-        tipRow(modelColor(m), "exact match", `${r.correct}/${r.n} · ${pctOf(r.correct, r.n)}`),
+        tipRow(modelColor(m), "exact match", pctCell(r.correct, r.n)),
         ...(r.lo != null ? [tipRow(null, "95% interval", pctRange(r.lo, r.hi))] : []),
       ]));
       return td;
@@ -301,16 +309,15 @@ function leaderboard() {
     const pct = pctOf(pooled, pooledN);
     const pool = el("td", {
       class: "c-pool", tabindex: "0",
-      "aria-label": `${m.name}: ${pooled} of ${pooledN} correct at T = 8 to 64 (${pct}); ${rows.map((r) => `T = ${r.T}: ${r.correct}`).join(", ")}`,
+      "aria-label": `${m.name}: exact match ${pct} at T = 8 to 64; ${rows.map((r) => `T = ${r.T}: ${pctCell(r.correct, r.n)}`).join(", ")}`,
     }, [el("span", { class: "pool" }, [
       el("i", { class: "pbar", "aria-hidden": "true" }, [el("i", { style: `width:${((pooled / pooledN) * 100).toFixed(2)}%;background:${modelColor(m)}` })]),
-      el("b", { text: String(pooled) }),
-      el("span", { class: "pct", text: pct }),
+      el("b", {}, [pct.slice(0, -1), el("span", { class: "pct", text: "%" })]),
     ])]);
     const poolTip = () => [
       tipTitle(`${m.name} · exact match`),
-      tipRow(modelColor(m), "T = 8–64", `${pooled}/${pooledN} · ${pct}`),
-      ...rows.map((r) => tipRow(null, `T = ${r.T}`, `${r.correct}/${r.n}${r.lo != null ? ` [${pctRange(r.lo, r.hi)}]` : ""}`)),
+      tipRow(modelColor(m), "T = 8–64", pct),
+      ...rows.map((r) => tipRow(null, `T = ${r.T}`, `${pctCell(r.correct, r.n)}${r.lo != null ? ` [${pctRange(r.lo, r.hi)}]` : ""}`)),
       tipSub("Brackets: 95% trajectory-bootstrap intervals."),
     ];
     hover(pool, (e) => showTip(e.clientX, e.clientY, poolTip()));
@@ -360,8 +367,8 @@ function heatCell(m, c, lenLabel) {
   const v = c.get(m.id);
   const p = v.n ? v.correct / v.n : 0;
   const bg = ramp(p);
-  const td = el("td", { style: `background:${bg};color:${inkOn(bg)}`, tabindex: "0", "aria-label": `${m.name}, ${c.tip}, ${lenLabel}: ${v.correct} of ${v.n}` }, [String(v.correct)]);
-  const content = () => [tipTitle(`${m.name} · ${c.tip}`), tipRow(modelColor(m), lenLabel, `${v.correct}/${v.n}`), tipRow(null, "exact match", pctOf(v.correct, v.n))];
+  const td = el("td", { style: `background:${bg};color:${inkOn(bg)}`, tabindex: "0", "aria-label": `${m.name}, ${c.tip}, ${lenLabel}: exact match ${pctCell(v.correct, v.n)}` }, [pctWhole(v.correct, v.n)]);
+  const content = () => [tipTitle(`${m.name} · ${c.tip}`), tipRow(modelColor(m), `exact match, ${lenLabel}`, pctCell(v.correct, v.n))];
   hover(td, (e) => showTip(e.clientX, e.clientY, content()));
   focusTip(td, content, "Arrow keys move between cells.");
   return td;
@@ -422,20 +429,19 @@ function boardCaption() {
   const cap = document.getElementById("board-cap");
   document.getElementById("board-scope").textContent = boardState.view === "workload" ? "Exact match, 2D workload study" : "Exact match, main benchmark";
   if (boardState.view === "overall") {
-    caption(cap, "Correct complete states out of 192 main instances per length; the pooled column counts 768 instances at T = 8–64, and rows are sorted by it.",
-      "One instance per trajectory at each length. Empty, invalid, and length-terminated outputs stay in the denominator.");
+    caption(cap, "Share of instances answered with every cell right, at each history length. Rows are sorted by the pooled column, T = 8–64.",
+      "One instance per trajectory at each length. Empty, invalid, and length-terminated outputs count as wrong. Tooltips give 95% trajectory-bootstrap intervals.");
     return;
   }
-  const n = heatColumns()[0].get(MODELS[0].id).n;
   const lenLabel = heatState.len === "pooled" ? "T = 8–64" : `T = ${heatState.len}`;
   const notes = {
-    task: "Each operation pools 3 dimensions × 8 trajectories per length. These breakdowns describe the sampled conditions, not intrinsic rule difficulty.",
-    dimension: "Each dimension pools 8 operations × 8 trajectories per length. Dimension changes geometry, boundary exposure, coordinate arity, and representation length together.",
-    workload: "Each operation sweeps a workload target in 2D, 8 trajectories per target and length. The main-benchmark targets (PAINT 100, REFLECT 64, MIX 12, LAYER 60) reuse main instances.",
+    task: "Each operation pools all three dimensions. These breakdowns describe the sampled conditions, not intrinsic rule difficulty.",
+    dimension: "Each dimension pools all eight operations. Dimension changes geometry, boundary exposure, coordinate arity, and representation length together.",
+    workload: "Each operation sweeps a workload target in 2D. The main-benchmark targets (PAINT 100, REFLECT 64, MIX 12, LAYER 60) reuse main instances.",
   };
   const text = heatState.view === "workload"
-    ? `Exact matches out of ${n} instances per cell (${lenLabel}, 2D workload study). Each target sets an operation's scale: PAINT ball size, REFLECT box volume, MIX reached region, LAYER component plus boundary.`
-    : `Exact matches out of ${n} instances per cell (${lenLabel}, main benchmark); color shows the same proportion.`;
+    ? `Exact match per cell (${lenLabel}, 2D workload study). Each target sets an operation's scale: PAINT ball size, REFLECT box volume, MIX reached region, LAYER component plus boundary.`
+    : `Exact match per cell (${lenLabel}, main benchmark); color shows the same share.`;
   caption(cap, text, notes[heatState.view]);
 }
 

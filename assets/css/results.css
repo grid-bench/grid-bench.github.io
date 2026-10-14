@@ -73,15 +73,15 @@
 :is(#results, #leaderboard) .lb .c-model { text-align: left; padding-left: 0; font-weight: 500; font-size: 14.5px; color: var(--text); }
 :is(#results, #leaderboard) .lb .c-spark { width: 24%; padding: 0 22px 0 12px; text-align: left; }
 :is(#results, #leaderboard) .lb .c-n { width: 6.2%; font-size: 14px; color: var(--text-2); cursor: default; }
-:is(#results, #leaderboard) .lb .c-pool { width: 210px; padding-right: 0; }
+:is(#results, #leaderboard) .lb .c-pool { width: 184px; padding-right: 0; }
 :is(#results, #leaderboard) .lb td.c-pool { border-radius: 10px; }
 :is(#results, #leaderboard) .lb td.c-pool:focus { outline: none; }
 :is(#results, #leaderboard) .lb td.c-pool:focus-visible { outline: 1px solid var(--text-2); outline-offset: -2px; }
 :is(#results, #leaderboard) .spark { width: 100%; min-width: 120px; }
 :is(#results, #leaderboard) .spark-svg { display: block; overflow: visible; cursor: crosshair; }
-:is(#results, #leaderboard) .pool { display: inline-grid; grid-template-columns: 64px 46px 50px; align-items: center; gap: 12px; cursor: default; }
+:is(#results, #leaderboard) .pool { display: inline-grid; grid-template-columns: 64px 78px; align-items: center; gap: 14px; cursor: default; }
 :is(#results, #leaderboard) .pool b { font: 600 25px/1 var(--font-display); letter-spacing: -0.02em; color: var(--text); text-align: right; }
-:is(#results, #leaderboard) .pool .pct { font-size: 13px; color: var(--muted); text-align: left; }
+:is(#results, #leaderboard) .pool .pct { margin-left: 2px; font: 500 14px/1 var(--font-sans); letter-spacing: 0; color: var(--muted); }
 :is(#results, #leaderboard) .pbar { display: block; height: 4px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
 :is(#results, #leaderboard) .pbar i { display: block; height: 100%; border-radius: 4px; }
 
@@ -163,11 +163,11 @@
 }
 @media (max-width: 900px) {
   :is(#results, #leaderboard) .lb .c-spark { width: 20%; padding: 0 14px 0 8px; }
-  :is(#results, #leaderboard) .lb .c-pool { width: 170px; }
+  :is(#results, #leaderboard) .lb .c-pool { width: 150px; }
   /* Tight columns: the length headers drop their "T = " prefix (the sparkline header names T). */
   :is(#results, #leaderboard) .lb thead .t-pre { display: none; }
   :is(#results, #leaderboard) .lb thead th.c-pool { white-space: normal; line-height: 1.3; }
-  :is(#results, #leaderboard) .pool { grid-template-columns: 40px 42px 46px; gap: 9px; }
+  :is(#results, #leaderboard) .pool { grid-template-columns: 40px 70px; gap: 10px; }
   :is(#results, #leaderboard) .pool b { font-size: 22px; }
 }
 /* Tablets: each leaderboard row is a grid. Name left, sparkline over the six

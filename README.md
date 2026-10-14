@@ -37,14 +37,14 @@ A static site with no build step and no runtime dependencies beyond Google Fonts
 | `index.html` | All page copy and section markup |
 | `assets/css/base.css` | Design tokens, fixed dark theme, nav, hero, footer, shared components |
 | `assets/css/{why,ops,instance,scale,results,play,use}.css` | Section styles |
-| `assets/js/main.js` | Navigation, reveal on scroll, data loading, hero animation |
+| `assets/js/main.js` | Navigation, reveal on scroll, data loading, hero animation, affiliation strip |
 | `assets/js/backdrop.js` | Interactive lattice backdrop |
 | `assets/js/util.js` | Shared colors, DOM helpers, tooltip, tilt |
 | `assets/js/optext.js` | Shared operation wording |
 | `assets/js/voxel.js` | 3D voxel renderer for reference trajectories |
 | `assets/js/grid2d.js` | Canvas renderer for 2D worlds and 4D slice arrays |
-| `assets/js/why.js` | 01 figure: the paper's Figure 1 history, W0 to W3 |
-| `assets/js/charts.js` | 02 leaderboard and 06 findings |
+| `assets/js/why.js` | 02 figure: the paper's Figure 1 history, W0 to W3 |
+| `assets/js/charts.js` | 01 leaderboard (percentages only) and 06 findings |
 | `assets/js/families.js` | 03 eight operation cards and rule dialogs |
 | `assets/js/task.js` | 04 one instance, start to finish |
 | `assets/js/coverage.js` | 05 three geometries, prefixes, design formula |
@@ -53,7 +53,7 @@ A static site with no build step and no runtime dependencies beyond Google Fonts
 | `assets/data/*.json` | Exported data (see below) with `manifest.json` hashes |
 | `tools/export_data.py` | Regenerates `assets/data/` from the research workspace |
 
-Page order: hero → why → leaderboard → operations → instance → scale → results →
+Page order: hero → leaderboard → why → operations → instance → scale → results →
 play → use & cite.
 
 ## Data provenance
@@ -104,7 +104,7 @@ python3 -m http.server 8765
 5. Enable GitHub Pages only with the project owner's authorization.
 
 Release maintainer: Zixiang Xu (`xzx34`). Paper authorship and release ownership
-are separate metadata. Affiliation logos appear only as an evenly weighted row
-identifying the authors' institutions, with a footer note that Grid-Bench is not
+are separate metadata. Affiliation logos appear only as an evenly weighted, scrolling row of
+full-colour marks on light tiles identifying the authors' institutions, with a footer note that Grid-Bench is not
 an official product of any listed organization. The site carries no sponsorship
 claims, internal review records, manuscript acknowledgments, or template credits.

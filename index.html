@@ -51,8 +51,8 @@
       <span>Grid-Bench</span>
     </a>
     <nav class="nav-links" id="nav-links" aria-label="Sections">
-      <a href="#why">Why</a>
       <a href="#leaderboard">Leaderboard</a>
+      <a href="#why">Why</a>
       <a href="#operations">Operations</a>
       <a href="#instance">How it works</a>
       <a href="#results">Findings</a>
@@ -74,8 +74,8 @@
           <p class="typed">Watch a world <span class="typed-verb" id="typed-verb">relabel</span><span class="caret" aria-hidden="true"></span></p>
           <p class="lead">A model reads a grid, the rules, and up to 64 events, then writes the final world. A simulator checks each cell.</p>
           <div class="hero-cta">
-            <a class="btn btn-primary" href="#why">
-              Why Grid-Bench
+            <a class="btn btn-primary" href="#leaderboard">
+              See the leaderboard
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
             </a>
             <div class="res" role="group" aria-label="Paper, code, and data: available at launch">
@@ -122,51 +122,27 @@
       </div>
 
       <div class="wrap affil" id="affiliations">
-        <p class="affil-label">Author affiliations</p>
-        <ul class="affil-logos">
-          <li><img src="assets/img/affil/usc.svg" alt="University of Southern California" style="--h:29px"></li>
-          <li><img src="assets/img/affil/mbzuai.svg" alt="MBZUAI" style="--h:32px"></li>
-          <li><img src="assets/img/affil/meta.svg" alt="Meta" style="--h:21px"></li>
-          <li><img src="assets/img/affil/notre-dame.svg" alt="University of Notre Dame" style="--h:30px"></li>
-          <li><img src="assets/img/affil/ucla.svg" alt="UCLA" style="--h:23px"></li>
-          <li><img src="assets/img/affil/asu.svg" alt="Arizona State University" style="--h:21px"></li>
-        </ul>
-        <a class="affil-more" href="#authors-block">19 authors <span aria-hidden="true">→</span></a>
-      </div>
-    </section>
-
-    <!-- ============ 01 Why ============ -->
-    <section class="block" id="why">
-      <div class="wrap">
-        <header class="sec-head reveal">
-          <span class="sec-num">01</span>
-          <h2>One change <em>shapes the next</em></h2>
-        </header>
-        <p class="why-intro reveal">Spatial instructions describe how to move objects, transform regions, or change their surroundings. Applied in sequence, <strong>each one acts on a world that earlier ones have already changed.</strong></p>
-        <div class="why-figure" id="why-figure" role="group" aria-label="Reference states W0 to W3 of a three-event history"></div>
-        <p class="why-caption reveal">From the paper’s Figure 1: the entity moves right, a <b>SET</b> adds an obstacle in its column (pink), and the next move, allowed two cells, stops after one (✕). Cyan is the entity (1), slate an obstacle (2), dark empty (0).</p>
-        <div class="why-prose">
-          <div class="reveal">
-            <h3>What we ask, and why</h3>
-            <p>Instructions like these show up in tasks from object manipulation to geometric design, where an earlier change can alter what a later one does. Can a language model follow such a history and say exactly where everything ends up?</p>
-            <p>In Grid-Bench, the model reads the starting grid, the rules, and the events as text, and writes the complete final grid in one response. Eight operation families cover geometry, neighborhoods, connected regions, and movement, in 2D, 3D, and 4D. Histories run up to 64 events, which separates getting one operation right from keeping track of many.</p>
-          </div>
-          <div class="reveal">
-            <h3>The design</h3>
-            <p><b>Grids make space explicit.</b> Coordinates and adjacency are spelled out, so a reflection inside a box and the growth of a connected region share one representation and one answer format.</p>
-            <p><b>The answer is the whole world.</b> Many spatial benchmarks check selected relations or entity states; here every cell must be right, including the many that should not change. Exact match asks for complete recovery; cell-level checks show how far a wrong answer is off, and where.</p>
-            <p><b>The rules execute.</b> A simulator computes the exact final state for any history, so every prediction is checkable, and the same rules can supply training examples with exact targets.</p>
+        <p class="affil-label" id="affil-label">Author affiliations</p>
+        <div class="affil-marquee" id="affil-marquee">
+          <div class="affil-track">
+            <ul class="affil-logos" aria-labelledby="affil-label">
+              <li><img src="assets/img/affil/usc.svg" alt="University of Southern California" width="93" height="30" style="--h:30px"></li>
+              <li><img src="assets/img/affil/mbzuai.svg" alt="MBZUAI" width="128" height="36" style="--h:36px"></li>
+              <li><img src="assets/img/affil/meta.svg" alt="Meta" width="109" height="22" style="--h:22px"></li>
+              <li><img src="assets/img/affil/notre-dame.svg" alt="University of Notre Dame" width="137" height="32" style="--h:32px"></li>
+              <li><img src="assets/img/affil/ucla.svg" alt="UCLA" width="75" height="24" style="--h:24px"></li>
+              <li><img src="assets/img/affil/asu.svg" alt="Arizona State University" width="128" height="23" style="--h:23px"></li>
+            </ul>
           </div>
         </div>
-        <p class="why-bridge reveal">Explicit rules do not make this easy. The best model we tested gets 183 of 192 grids exactly right after one event, and 25 of 192 after 64.</p>
       </div>
     </section>
 
-    <!-- ============ 02 Leaderboard ============ -->
+    <!-- ============ 01 Leaderboard ============ -->
     <section class="block" id="leaderboard">
       <div class="wrap">
         <header class="sec-head reveal">
-          <span class="sec-num">02</span>
+          <span class="sec-num">01</span>
           <h2>The <em>leaderboard</em></h2>
           <p>Six LLMs, the same prompts, one answer each and no tools. A grid counts only if every cell is right. T is the number of events in the history.</p>
         </header>
@@ -204,6 +180,33 @@
       </div>
     </section>
 
+    <!-- ============ 02 Why ============ -->
+    <section class="block" id="why">
+      <div class="wrap">
+        <header class="sec-head reveal">
+          <span class="sec-num">02</span>
+          <h2>One change <em>shapes the next</em></h2>
+        </header>
+        <p class="why-intro reveal">Spatial instructions describe how to move objects, transform regions, or change their surroundings. Applied in sequence, <strong>each one acts on a world that earlier ones have already changed.</strong></p>
+        <div class="why-figure" id="why-figure" role="group" aria-label="Reference states W0 to W3 of a three-event history"></div>
+        <p class="why-caption reveal">From the paper’s Figure 1: the entity moves right, a <b>SET</b> adds an obstacle in its column (pink), and the next move, allowed two cells, stops after one (✕). Cyan is the entity (1), slate an obstacle (2), dark empty (0).</p>
+        <div class="why-prose">
+          <div class="reveal">
+            <h3>What we ask, and why</h3>
+            <p>Instructions like these show up in tasks from object manipulation to geometric design, where an earlier change can alter what a later one does. Can a language model follow such a history and say exactly where everything ends up?</p>
+            <p>In Grid-Bench, the model reads the starting grid, the rules, and the events as text, and writes the complete final grid in one response. Eight operation families cover geometry, neighborhoods, connected regions, and movement, in 2D, 3D, and 4D. Histories run up to 64 events, which separates getting one operation right from keeping track of many.</p>
+          </div>
+          <div class="reveal">
+            <h3>The design</h3>
+            <p><b>Grids make space explicit.</b> Coordinates and adjacency are spelled out, so a reflection inside a box and the growth of a connected region share one representation and one answer format.</p>
+            <p><b>The answer is the whole world.</b> Many spatial benchmarks check selected relations or entity states; here every cell must be right, including the many that should not change. Exact match asks for complete recovery; cell-level checks show how far a wrong answer is off, and where.</p>
+            <p><b>The rules execute.</b> A simulator computes the exact final state for any history, so every prediction is checkable, and the same rules can supply training examples with exact targets.</p>
+          </div>
+        </div>
+        <p class="why-bridge reveal">Explicit rules do not make this easy. The best model we tested gets 95% of grids exactly right after one event, and 13% after 64.</p>
+      </div>
+    </section>
+
     <!-- ============ 03 Operations ============ -->
     <section class="block" id="operations">
       <div class="wrap">
@@ -235,7 +238,7 @@
         <header class="sec-head reveal">
           <span class="sec-num">04</span>
           <h2>One instance, <em>start to finish</em></h2>
-          <p>The history from section 01, one step at a time: what the model reads, what it must write, and how the answer is scored.</p>
+          <p>The history from section 02, one step at a time: what the model reads, what it must write, and how the answer is scored.</p>
         </header>
 
         <div class="ix-story reveal" id="ix-story">
