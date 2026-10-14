@@ -21,7 +21,7 @@ against an executable reference world.
 | Website | https://grid-bench.github.io/ | Planned; not deployed |
 | Code | https://github.com/grid-bench/Grid-Bench | Private prerelease |
 | Dataset | https://huggingface.co/datasets/xzx34/Grid-Bench | Planned; not uploaded |
-| Paper | Pending confirmed public identifier | Do not invent a paper URL |
+| Paper | Add after arXiv publication | Do not invent a paper URL |
 
 ## Content outline
 
@@ -54,3 +54,10 @@ Use exported reference states for any interactive playback. Preserve metric
 definitions, sample denominators, model names, and source identities. Verify all
 external links, asset licenses, and paper metadata before launch. This draft
 includes no website build, deployment workflow, or generated public pages.
+
+## Release scope
+
+Code uses MIT and original data use CC BY 4.0. The data release contains
+benchmark instances, simulator references, and evaluation measurements; it does
+not include collected model answers or predicted grids. Use reference-world
+examples for demonstrations. Add the paper link after arXiv publication.
