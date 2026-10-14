@@ -31,12 +31,18 @@ against an executable reference world.
    outcomes. Explain that prefixes share a trajectory.
 4. Present selected findings on history length and errors within predicted grids.
 5. Link the offline code quickstart and dataset-loading instructions.
-6. Include verified citation metadata, authors, and the approved acknowledgment.
+6. Include a verified paper citation with the full paper author list, and the
+   release maintainer contact.
 
 The project owner's `release/WEBSITE_BRIEF.md` in the research workspace contains
 the detailed content brief and asset inventory. Request the approved assets and
 their provenance at implementation handoff. The private code repository contains
-the usage guides and author metadata in `CITATION.cff`.
+the usage guides and paper citation in `CITATION.cff`.
+
+Release maintainer: Zixiang Xu (`xzx34`). Keep paper authorship separate from
+software maintenance and release ownership. Use project branding, without
+corporate logos, sponsorship claims, internal review records, or manuscript
+template credits. Do not copy the manuscript acknowledgment onto the site.
 
 ## Implementation handoff
 
