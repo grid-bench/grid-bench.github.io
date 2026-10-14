@@ -1,21 +1,15 @@
-// Shared helpers: theme, colors, DOM, and visibility-driven animation.
+// Shared helpers: colors, DOM, and visibility-driven animation. The site theme is fixed dark.
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
 
+// Kept for callers that branch on the theme; the site has no light theme.
 export function theme() {
-  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
-}
-
-export function cssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return "dark";
 }
 
 // Grid value colors. Values 1..6 are categorical; digits (small grids) and
 // hover readouts (large grids) carry the value as a second channel.
-const CELL = {
-  dark: ["#259ED6", "#C78707", "#CA488F", "#23AC74", "#796EDA", "#C3D3E4"],
-  light: ["#008BC2", "#C27F00", "#C34189", "#019F68", "#6353C5", "#313E52"],
-};
+const CELL = ["#259ED6", "#C78707", "#CA488F", "#23AC74", "#796EDA", "#C3D3E4"];
 
 // OKLCH -> sRGB hex, used for sequential ramps.
 export function oklch(L, C, H) {
@@ -43,28 +37,27 @@ export function oklch(L, C, H) {
   );
 }
 
-// Sequential ramp (one hue) for magnitudes: t in [0, 1].
+// Sequential ramp (one hue) for magnitudes: t in [0, 1]. `mode` is accepted for
+// compatibility; only the dark ramp exists.
 export function ramp(t, mode = theme()) {
   const tt = Math.max(0, Math.min(1, t));
-  return mode === "dark"
-    ? oklch(0.3 + 0.55 * tt, 0.04 + 0.1 * tt, 220)
-    : oklch(0.96 - 0.5 * tt, 0.02 + 0.12 * tt, 225);
+  return oklch(0.3 + 0.55 * tt, 0.04 + 0.1 * tt, 220);
 }
 
 function isPowerAlphabet(values) {
   return values.length > 6 && values.slice(1).every((v, i) => v === 2 ** i);
 }
 
-// Returns a function value -> fill color for one world alphabet.
+// Returns a function value -> fill color for one world alphabet. `mode` is accepted
+// for compatibility; only the dark palette exists.
 export function cellPalette(values, mode = theme()) {
-  const empty = mode === "dark" ? "#131c30" : "#e9eef6";
+  const empty = "#131c30";
   if (isPowerAlphabet(values)) {
-    return (v) => (v === 0 ? empty : mode === "dark"
-      ? oklch(0.5 + 0.3 * Math.min(1, Math.log2(v) / 8), 0.13, 212 - 40 * Math.min(1, Math.log2(v) / 8))
-      : oklch(0.72 - 0.32 * Math.min(1, Math.log2(v) / 8), 0.13, 222 - 40 * Math.min(1, Math.log2(v) / 8)));
+    return (v) => (v === 0 ? empty
+      : oklch(0.5 + 0.3 * Math.min(1, Math.log2(v) / 8), 0.13, 212 - 40 * Math.min(1, Math.log2(v) / 8)));
   }
   const nonzero = values.filter((v) => v !== 0);
-  const colors = CELL[mode];
+  const colors = CELL;
   return (v) => {
     if (v === 0) return empty;
     const i = nonzero.indexOf(v);
@@ -96,14 +89,15 @@ export function mix(a, b, t) {
   return rgbToHex(x.map((c, i) => c + (y[i] - c) * t));
 }
 
-// Ink (text) color that clears contrast on a given fill.
+// Ink (text) color with the higher WCAG contrast on a given fill: dark navy
+// (#0b1426, relative luminance + 0.05 = 0.0571) or white.
 export function inkOn(hex) {
   const [r, g, b] = hexToRgb(hex).map((c) => {
     const s = c / 255;
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
   });
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return lum > 0.32 ? "#0b1426" : "#ffffff";
+  return (lum + 0.05) / 0.0571 >= 1.05 / (lum + 0.05) ? "#0b1426" : "#ffffff";
 }
 
 export function el(tag, attrs = {}, children = []) {

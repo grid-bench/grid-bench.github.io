@@ -1,4 +1,4 @@
-// Section 02: one instance, start to finish. A scroll-driven story beside a sticky stage that
+// Section 04: one instance, start to finish. A scroll-driven story beside a sticky stage that
 // replays the paper's Figure 1 MOVE/SET histories from the exported reference states.
 
 import { el, svg, reducedMotion, onVisible, coordOf, showTip, hideTip, tipTitle } from "./util.js";
@@ -11,7 +11,7 @@ const DEFS = {
   em: ["Exact match (EM)", "EM = 1 only when a valid complete state equals the reference at every coordinate. Empty, invalid, and length-terminated answers count as 0."],
   ca: ["Cell accuracy (CA)", "The fraction of all grid cells with the correct value, on valid answers."],
   wrong: ["Wrong cells", "Coordinates where the answer's value differs from the reference state."],
-  cu: ["Changed / preserved (C/U)", "Wrong cells among cells whose reference value changed from the initial world (C) versus stayed the same (U). Dashed cells on the stage are C."],
+  cu: ["Changed (C) / unchanged (U)", "Wrong cells split by whether the reference final value differs from the initial world (C) or equals it (U). Dashed cells on the stage are C."],
 };
 
 let uid = 0;
@@ -353,7 +353,10 @@ export function initTask(data) {
   const tabs = [...story.querySelectorAll("[data-example]")];
   const rail = el("span", { class: "ix-rail", "aria-hidden": "true" }, [el("i")]);
   stepsEl.prepend(rail);
-  document.getElementById("ix-ver").textContent = data.prompt_version || "";
+  // Short visible label; the full frozen prompt ID stays available on hover.
+  const pv = data.prompt_version || "", verEl = document.getElementById("ix-ver"), vm = /\/(\d[\w.]*)$/.exec(pv);
+  verEl.textContent = vm ? `prompt v${vm[1]}` : pv;
+  if (pv) verEl.title = `Prompt version ID: ${pv}`;
 
   let exIndex = 0, ex = null, world = null, demo = null, effects = [];
   let triggers = [], active = -1, near = false, hl = -1;
@@ -455,7 +458,10 @@ export function initTask(data) {
     story.querySelectorAll('[data-ix="shape"]').forEach((n) => { n.textContent = ex.shape.join("×"); });
     story.querySelectorAll('[data-ix="nev"]').forEach((n) => { n.textContent = ex.events.length; });
     story.querySelectorAll('[data-ix="last"]').forEach((n) => { n.textContent = `W${last()}`; });
-    ruleEl.textContent = sec["FAMILY RULE"] || "";
+    // Both rule blocks the prompt carries: SET (common to every family) and this family's rule.
+    ruleEl.textContent = sec["COMMON EVENT"]
+      ? `COMMON EVENT\n${sec["COMMON EVENT"]}\n\nFAMILY RULE\n${sec["FAMILY RULE"] || ""}`
+      : sec["FAMILY RULE"] || "";
     promptEl.querySelectorAll(":scope > :not(.copy)").forEach((n) => n.remove());
     [...promptEl.childNodes].filter((n) => n.nodeType === 3).forEach((n) => n.remove());
     promptEl.append(promptNodes(ex.prompt));
@@ -503,7 +509,8 @@ export function initTask(data) {
 
   function triggerLine() {
     const H = window.innerHeight;
-    if (!MOBILE.matches) return H * 0.45;
+    // Wide screens, and narrow ones where the stage is not sticky (landscape phones).
+    if (!MOBILE.matches || getComputedStyle(stageCol).position !== "sticky") return H * 0.45;
     const r = stageCol.getBoundingClientRect();
     return Math.min(H - 40, r.bottom + (H - r.bottom) * 0.3);
   }
@@ -515,7 +522,8 @@ export function initTask(data) {
 
   function measure() {
     if (!near || !triggers.length) return;
-    stageCol.classList.toggle("is-stuck", MOBILE.matches && stageCol.getBoundingClientRect().top <= parseFloat(getComputedStyle(stageCol).top) + 1);
+    const cs = getComputedStyle(stageCol);
+    stageCol.classList.toggle("is-stuck", MOBILE.matches && cs.position === "sticky" && stageCol.getBoundingClientRect().top <= parseFloat(cs.top) + 1);
     const line = triggerLine();
     let k = 0;
     triggers.forEach((t, j) => { if (t.node.getBoundingClientRect().top < line) k = j; });

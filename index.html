@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Grid-Bench: Can LLMs Predict How Discrete Worlds Change?</title>
-  <meta name="description" content="Grid-Bench is an executable benchmark for spatial state prediction. Eight families of spatial operations transform 2D, 3D, and 4D grids; language models predict the complete final state, and every cell is checked against reference execution.">
+  <meta name="description" content="Grid-Bench: an executable benchmark where LLMs predict the complete final state of 2D, 3D, and 4D grids after a history of spatial operations.">
   <meta name="theme-color" content="#06080e">
   <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
@@ -12,6 +12,11 @@
   <meta property="og:description" content="An executable benchmark for complete spatial state prediction across eight operation families and 2D, 3D, and 4D grids.">
   <meta property="og:url" content="https://grid-bench.github.io/">
   <meta property="og:image" content="https://grid-bench.github.io/assets/img/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Grid-Bench: Can LLMs Predict How Discrete Worlds Change? A 3D voxel world from the reference simulator.">
+  <meta property="og:site_name" content="Grid-Bench">
+  <link rel="canonical" href="https://grid-bench.github.io/">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,8 +59,8 @@
       <a href="#play">Play</a>
       <a href="#use">Use &amp; cite</a>
     </nav>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open section menu" aria-expanded="false" aria-controls="nav-links">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Section menu" aria-expanded="false" aria-controls="nav-links">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path class="i-menu" d="M4 7h16M4 12h16M4 17h16"/><path class="i-close" d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
   </header>
 
@@ -67,7 +72,7 @@
           <h1>Grid-Bench</h1>
           <p class="subtitle">Can LLMs Predict How Discrete Worlds Change?</p>
           <p class="typed">Watch a world <span class="typed-verb" id="typed-verb">relabel</span><span class="caret" aria-hidden="true"></span></p>
-          <p class="lead">A model reads a grid, one rule, and up to 64 events, then writes the final world. A simulator checks every cell.</p>
+          <p class="lead">A model reads a grid, the rules, and up to 64 events, then writes the final world. A simulator checks each cell.</p>
           <div class="hero-cta">
             <a class="btn btn-primary" href="#why">
               Why Grid-Bench
@@ -95,7 +100,7 @@
           <div class="window" id="hero-world">
             <div class="win-bar">
               <span class="win-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span class="win-title" id="hud-world">reference-sim · RELABEL · 6×6×7</span>
+              <span class="win-title" id="hud-world"><span class="win-src">reference-sim · </span>RELABEL · 6×6×7</span>
               <span class="win-tools">
                 <span class="win-t tabnum">T <b id="hud-t">0</b>/<span id="hud-n">32</span></span>
                 <button type="button" id="hero-pause" aria-label="Pause animation">
@@ -112,11 +117,11 @@
             </div>
             <div class="win-log" id="hero-log" aria-hidden="true"></div>
           </div>
-          <p class="world-caption">A real 3D benchmark trajectory, executed by the reference simulator · drag to rotate</p>
+          <p class="world-caption">A real 3D benchmark trajectory, executed by the reference simulator<span class="drag-hint"> · drag to rotate</span></p>
         </div>
       </div>
 
-      <div class="wrap affil reveal" id="affiliations">
+      <div class="wrap affil" id="affiliations">
         <p class="affil-label">Author affiliations</p>
         <ul class="affil-logos">
           <li><img src="assets/img/affil/usc.svg" alt="University of Southern California" style="--h:29px"></li>
@@ -124,7 +129,7 @@
           <li><img src="assets/img/affil/meta.svg" alt="Meta" style="--h:21px"></li>
           <li><img src="assets/img/affil/notre-dame.svg" alt="University of Notre Dame" style="--h:30px"></li>
           <li><img src="assets/img/affil/ucla.svg" alt="UCLA" style="--h:23px"></li>
-          <li><img src="assets/img/affil/asu.svg" alt="Arizona State University" style="--h:25px"></li>
+          <li><img src="assets/img/affil/asu.svg" alt="Arizona State University" style="--h:21px"></li>
         </ul>
         <a class="affil-more" href="#authors-block">19 authors <span aria-hidden="true">→</span></a>
       </div>
@@ -139,21 +144,21 @@
         </header>
         <p class="why-intro reveal">Spatial instructions describe how to move objects, transform regions, or change their surroundings. Applied in sequence, <strong>each one acts on a world that earlier ones have already changed.</strong></p>
         <div class="why-figure" id="why-figure" role="group" aria-label="Reference states W0 to W3 of a three-event history"></div>
-        <p class="why-caption reveal">A three-event history from the paper. The entity moves right, a <b>SET</b> places an obstacle in its column, and the next move, allowed two cells, stops after one. Values: 1 is the entity, 2 an obstacle, 0 empty.</p>
+        <p class="why-caption reveal">From the paper’s Figure 1: the entity moves right, a <b>SET</b> adds an obstacle in its column (pink), and the next move, allowed two cells, stops after one (✕). Cyan is the entity (1), slate an obstacle (2), dark empty (0).</p>
         <div class="why-prose">
           <div class="reveal">
-            <h3>The question</h3>
-            <p>Can a language model follow such a history and say exactly where everything ends up? In Grid-Bench it reads the starting grid, the rules, and the events as text, and writes the complete final grid in one response.</p>
-            <p>Eight operation families cover geometry, neighborhoods, connected regions, and movement, in 2D, 3D, and 4D. Histories run up to 64 events, which separates getting one operation right from keeping track of many.</p>
+            <h3>What we ask, and why</h3>
+            <p>Instructions like these show up in tasks from object manipulation to geometric design, where an earlier change can alter what a later one does. Can a language model follow such a history and say exactly where everything ends up?</p>
+            <p>In Grid-Bench, the model reads the starting grid, the rules, and the events as text, and writes the complete final grid in one response. Eight operation families cover geometry, neighborhoods, connected regions, and movement, in 2D, 3D, and 4D. Histories run up to 64 events, which separates getting one operation right from keeping track of many.</p>
           </div>
           <div class="reveal">
             <h3>The design</h3>
             <p><b>Grids make space explicit.</b> Coordinates and adjacency are spelled out, so a reflection inside a box and the growth of a connected region share one representation and one answer format.</p>
-            <p><b>The answer is the whole world.</b> Every cell must be right, including the many that should not change. Exact match asks for complete recovery; cell-level checks show how far a wrong answer is off, and where.</p>
+            <p><b>The answer is the whole world.</b> Many spatial benchmarks check selected relations or entity states; here every cell must be right, including the many that should not change. Exact match asks for complete recovery; cell-level checks show how far a wrong answer is off, and where.</p>
             <p><b>The rules execute.</b> A simulator computes the exact final state for any history, so every prediction is checkable, and the same rules can supply training examples with exact targets.</p>
           </div>
         </div>
-        <p class="why-bridge reveal">Even with explicit rules, reliable prediction of spatial change is hard. Here is how six LLMs do.</p>
+        <p class="why-bridge reveal">Explicit rules do not make this easy. The best model we tested gets 183 of 192 grids exactly right after one event, and 25 of 192 after 64.</p>
       </div>
     </section>
 
@@ -163,11 +168,11 @@
         <header class="sec-head reveal">
           <span class="sec-num">02</span>
           <h2>The <em>leaderboard</em></h2>
-          <p>Six LLMs, the same prompts, one answer each and no tools. A grid counts only if every cell is right.</p>
+          <p>Six LLMs, the same prompts, one answer each and no tools. A grid counts only if every cell is right. T is the number of events in the history.</p>
         </header>
         <div class="card rcard lboard reveal" id="board">
           <div class="lb-top">
-            <h3 class="lb-title"><span id="board-scope">exact match, main view</span></h3>
+            <h3 class="lb-title"><span id="board-scope">Exact match, main benchmark</span></h3>
             <div class="seg lb-seg" id="board-view" role="group" aria-label="Leaderboard view">
               <button type="button" aria-pressed="true" data-view="overall">Overall</button>
               <button type="button" aria-pressed="false" data-view="task"><span class="by">By </span>operation</button>
@@ -177,7 +182,7 @@
           </div>
           <div id="board-overall">
             <table class="lb" id="lb-table">
-              <caption class="sr-only">Exact match by history length on the main view, six models in the study's fixed order</caption>
+              <caption class="sr-only">Exact match by history length on the main benchmark, six models sorted by pooled exact match at T = 8 to 64</caption>
             </table>
           </div>
           <div id="board-heat" hidden>
@@ -205,20 +210,21 @@
         <header class="sec-head reveal">
           <span class="sec-num">03</span>
           <h2>Eight ways a world <em>changes</em></h2>
-          <p>Each card replays a real benchmark trajectory as the reference simulator executes it. Select one for its rule and a worked example.</p>
+          <p>Each history applies one family, interleaved with single-cell SET events. Cards replay real benchmark trajectories; select one for its rule and a worked example.</p>
         </header>
         <div class="ops-bar reveal">
           <div class="seg ops-dim" id="ops-dim" role="group" aria-label="World dimension">
             <button type="button" data-dim="2" aria-pressed="true">2D <span class="ops-dim-shape">16×16</span></button>
             <button type="button" data-dim="3" aria-pressed="false">3D <span class="ops-dim-shape">6×6×7</span></button>
           </div>
-          <p class="ops-hint">Changed cells flash after each event. <button class="info" id="ops-info" type="button" aria-label="About these animations">i</button></p>
+          <p class="ops-hint">Changed cells flash after each event. <button class="info" id="ops-info" type="button" aria-label="About these animations" aria-describedby="ops-info-note">i</button><span class="sr-only" id="ops-info-note">The first 24 events (2D) or 32 events (3D) of a 64-event benchmark trajectory, executed by the reference simulator. Core events of one family are interleaved with single-cell SET events.</span></p>
           <button class="btn btn-sm btn-ghost ops-pause" id="ops-pause" type="button" aria-label="Pause the animations">
             <svg class="ops-pause-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>
             <span class="ops-pause-label">Pause</span>
           </button>
         </div>
         <div class="ops" id="ops" data-dim="2"></div>
+        <div class="ops-dots" id="ops-dots" aria-hidden="true"></div>
       </div>
       <dialog class="op-dialog" id="op-dialog" aria-labelledby="dlg-title"></dialog>
     </section>
@@ -229,7 +235,7 @@
         <header class="sec-head reveal">
           <span class="sec-num">04</span>
           <h2>One instance, <em>start to finish</em></h2>
-          <p>The model gets a world, a rule, and events as plain text, and answers with the complete final grid in one response.</p>
+          <p>The history from section 01, one step at a time: what the model reads, what it must write, and how the answer is scored.</p>
         </header>
 
         <div class="ix-story reveal" id="ix-story">
@@ -306,7 +312,7 @@
       <div class="wrap">
         <header class="sec-head reveal">
           <span class="sec-num">05</span>
-          <h2>Same budget, <em>three geometries</em></h2>
+          <h2>Same size, <em>three geometries</em></h2>
           <p>Worlds hold about 256 cells in 2D, 3D, and 4D, and every trajectory is cut at six history lengths.</p>
         </header>
         <div class="sc-dims" id="dims">
@@ -397,7 +403,7 @@
         <header class="sec-head reveal">
           <span class="sec-num">06</span>
           <h2>Beyond the <em>leaderboard</em></h2>
-          <p>Exact match is only part of the picture. Three findings from the six-model study.</p>
+          <p>Where models pull apart as histories grow, how far their wrong grids miss, and what those grids still get right.</p>
         </header>
 
 
@@ -433,19 +439,19 @@
           <div class="f-fig">
             <div class="chart-tools">
               <div class="seg" id="f2-tabs" role="tablist" aria-label="Finding 2 charts">
-                <button type="button" role="tab" id="tab-extent" aria-selected="true" aria-controls="panel-extent">Error extent</button>
-                <button type="button" role="tab" id="tab-pairs" aria-selected="false" aria-controls="panel-pairs">Matched pairs</button>
+                <button type="button" role="tab" id="tab-pairs" aria-selected="true" aria-controls="panel-pairs">Matched pairs</button>
+                <button type="button" role="tab" id="tab-extent" aria-selected="false" aria-controls="panel-extent">All models</button>
               </div>
-              <div class="legend" id="extent-legend" data-panel="panel-extent"></div>
-              <div class="legend" id="pair-legend" data-panel="panel-pairs" hidden></div>
+              <div class="legend" id="pair-legend" data-panel="panel-pairs"></div>
+              <div class="legend" id="extent-legend" data-panel="panel-extent" hidden></div>
             </div>
-            <div class="tabpanel" id="panel-extent" role="tabpanel" aria-labelledby="tab-extent">
-              <div class="chart-box" id="extent-chart"></div>
-              <p class="caption cap" id="extent-cap"></p>
-            </div>
-            <div class="tabpanel" id="panel-pairs" role="tabpanel" aria-labelledby="tab-pairs" hidden>
+            <div class="tabpanel" id="panel-pairs" role="tabpanel" aria-labelledby="tab-pairs">
               <div class="chart-box" id="pair-chart"></div>
               <p class="caption cap" id="pair-cap"></p>
+            </div>
+            <div class="tabpanel" id="panel-extent" role="tabpanel" aria-labelledby="tab-extent" hidden>
+              <div class="chart-box" id="extent-chart"></div>
+              <p class="caption cap" id="extent-cap"></p>
             </div>
           </div>
         </article>
@@ -454,7 +460,7 @@
           <div class="f-text">
             <span class="f-num" aria-hidden="true">3</span>
             <h3>Wrong grids can still capture real change</h3>
-            <p class="f-lead">At T&nbsp;=&nbsp;64, <b data-fact="wrong-64">1,111</b> of <span data-fact="all-64">1,152</span> answers are wrong, yet GPT-5.6 Sol's valid answers still get <b data-fact="sol-ca-64">81.6%</b> of cells right, against <b data-fact="sol-copy-64">51.0%</b> for copying the initial world.</p>
+            <p class="f-lead">At T&nbsp;=&nbsp;64, the six models miss the exact grid on <b data-fact="wrong-64">1,111</b> of their <span data-fact="all-64">1,152</span> attempts (192 each), yet GPT-5.6 Sol's valid answers still get <b data-fact="sol-ca-64">81.6%</b> of cells right, against <b data-fact="sol-copy-64">51.0%</b> for copying the initial world.</p>
           </div>
           <div class="f-fig">
             <div class="chart-tools">
@@ -477,9 +483,9 @@
         </article>
 
         <ul class="res-notes reveal" aria-label="Notes on the results">
-          <li><b>No prefix imputation.</b> <span id="note-prefix">A later prefix is sometimes solved after an earlier one fails, so each length is scored on its own.</span></li>
-          <li><b>Delivery counts.</b> <span id="note-delivery">Empty outcomes and length terminations score as wrong.</span></li>
-          <li><b>Verified references.</b> <span id="note-oracle">A second rule implementation replays selected states in both cohorts with zero mismatches.</span></li>
+          <li><b>Each length is scored on its own.</b> <span id="note-prefix">A model sometimes solves a longer prefix after failing a shorter one: on 5 (GLM-5) to 51 (Claude 5 Sonnet) of 192 trajectories.</span></li>
+          <li><b>Missing answers count as wrong.</b> <span id="note-delivery">Each model got 1,488 requests; empty responses range from 0 (GLM-5) to 248 (Claude 5 Sonnet, 245 of them stopped at the length limit).</span></li>
+          <li><b>References are double-checked.</b> <span id="note-oracle">A separately written implementation of the rules recomputes all 1,488 reference states (30,008 replayed events) with 0 mismatches.</span></li>
         </ul>
       </div>
     </section>
@@ -621,7 +627,7 @@
   <footer>
     <div class="wrap foot">
       <span class="brand">Grid-Bench</span>
-      <span>Code MIT · Data CC BY 4.0</span>
+      <span>Code MIT · Original benchmark data CC BY 4.0</span>
       <p class="foot-note">Logos identify the authors' affiliations. Grid-Bench is an academic research project, not an official product of any listed organization.</p>
     </div>
   </footer>

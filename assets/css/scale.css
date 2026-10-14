@@ -1,4 +1,4 @@
-/* Section 03: three geometries, six prefixes, and the design formula.
+/* Section 05: three geometries, six prefixes, and the design formula.
    Every class here is prefixed sc- so it cannot collide with other sections. */
 
 /* ---------- Dimension cards ---------- */
@@ -182,6 +182,12 @@
 }
 @media (max-width: 940px) {
   .sc-dims { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+/* Once "+ 336" wraps under the product, single-row parens would split across lines.
+   Hide the strokes and let the 1,488 brace show the grouping; the sr-only "(" and ")" stay. */
+@media (max-width: 780px) {
+  .sc-paren { display: contents; }
+  .sc-paren svg { display: none; }
 }
 /* Tablet: text column beside the world, with the neighbor glyph filling the middle. */
 @media (min-width: 641px) and (max-width: 940px) {

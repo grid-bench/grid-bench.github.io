@@ -1,4 +1,4 @@
-// Section 03: three geometries, the six-prefix diagram, and the design formula.
+// Section 05: three geometries, the six-prefix diagram, and the design formula.
 // Grid states come from exported reference trajectories; design counts come from results.json.
 
 import { GridCanvas } from "./grid2d.js";

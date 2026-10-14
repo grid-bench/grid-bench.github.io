@@ -1,4 +1,4 @@
-// Section 06: closing call to action (tabbed commands), authors with affiliations, and BibTeX.
+// Section 08: closing call to action (tabbed commands), authors with affiliations, and BibTeX.
 
 import { el, hideTip, reducedMotion, showTip, tilt, tipTitle } from "./util.js";
 
@@ -187,6 +187,5 @@ export function initUse() {
   initInfo();
   renderAuthors();
   renderBib();
-  const authorsCard = document.getElementById("authors-block");
-  if (authorsCard) tilt(authorsCard, { max: 2.5, lift: 3 });
+  document.querySelectorAll("#use .cite-card").forEach((card) => tilt(card, { max: 2.5, lift: 3 }));
 }

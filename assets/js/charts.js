@@ -1,4 +1,4 @@
-// Section 04: leaderboard (overall + breakdown views) and the three findings.
+// Sections 02 and 06: leaderboard (overall + breakdown views) and the three findings.
 // All values come from assets/data/results.json (frozen analysis snapshot).
 
 import { el, fmt, hideTip, inkOn, ramp, showTip, svg, tipRow, tipSub, tipTitle } from "./util.js";
@@ -20,6 +20,7 @@ const FLIP = window.matchMedia("(max-width: 820px)");
 
 let R; // results
 let MODELS; // [{id, name, color, color_dark, marker}]
+let BOARD; // MODELS sorted by pooled exact match at T = 8-64, for the leaderboard card
 const hidden = new Set();
 
 const modelColor = (m) => m.color_dark;
@@ -54,13 +55,49 @@ function hover(node, show, hide = hideTip) {
 }
 
 // Keyboard focus shows the same tooltip as hover, anchored to the element.
-function focusTip(node, content) {
+// An optional hint line is added only for keyboard focus, not for a click.
+function focusTip(node, content, hint) {
   node.addEventListener("focus", () => {
     const r = node.getBoundingClientRect();
-    showTip(r.right, r.top + r.height / 2, content());
+    let kb = false;
+    try { kb = node.matches(":focus-visible"); } catch { kb = false; }
+    showTip(r.right, r.top + r.height / 2, hint && kb ? [...content(), tipSub(hint)] : content());
   });
   node.addEventListener("blur", hideTip);
   node.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });
+}
+
+// Roving tabindex: a group of marks is one tab stop and arrow keys move focus
+// inside it. rows is row-major; Left/Right step through the marks in reading
+// order, Up/Down keep the column in the next row, Home/End jump to the ends.
+function roving(rows) {
+  rows = rows.filter((r) => r.length);
+  const items = rows.flat();
+  if (!items.length) return;
+  items.forEach((n, i) => n.setAttribute("tabindex", i ? "-1" : "0"));
+  let i0 = 0;
+  rows.forEach((row, r) => row.forEach((node, c) => node.addEventListener("keydown", (e) => {
+    const i = items.indexOf(node);
+    let j;
+    if (e.key === "ArrowRight") j = Math.min(items.length - 1, i + 1);
+    else if (e.key === "ArrowLeft") j = Math.max(0, i - 1);
+    else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      const rr = r + (e.key === "ArrowDown" ? 1 : -1);
+      if (rr < 0 || rr >= rows.length) { e.preventDefault(); return; }
+      j = items.indexOf(rows[rr][Math.min(c, rows[rr].length - 1)]);
+    } else if (e.key === "Home") j = 0;
+    else if (e.key === "End") j = items.length - 1;
+    else return;
+    e.preventDefault();
+    if (j !== i) items[j].focus();
+  })));
+  // Whichever mark gets focus (by key, click, or tap) becomes the group's tab stop.
+  items.forEach((n, j) => n.addEventListener("focus", () => {
+    if (j === i0) return;
+    items[i0].setAttribute("tabindex", "-1");
+    n.setAttribute("tabindex", "0");
+    i0 = j;
+  }));
 }
 
 let infoSeq = 0;
@@ -246,7 +283,7 @@ function leaderboard() {
     el("th", { scope: "col", class: "c-pool", text: "Pooled T = 8–64 (of 768)" }),
   ]);
   const sparks = [];
-  const body = MODELS.map((m) => {
+  const body = BOARD.map((m) => {
     const rows = lengthRows(m);
     const pooled = POOLED.reduce((s, t) => s + lengthRow(m.id, t).correct, 0);
     const pooledN = POOLED.reduce((s, t) => s + lengthRow(m.id, t).n, 0);
@@ -326,7 +363,7 @@ function heatCell(m, c, lenLabel) {
   const td = el("td", { style: `background:${bg};color:${inkOn(bg)}`, tabindex: "0", "aria-label": `${m.name}, ${c.tip}, ${lenLabel}: ${v.correct} of ${v.n}` }, [String(v.correct)]);
   const content = () => [tipTitle(`${m.name} · ${c.tip}`), tipRow(modelColor(m), lenLabel, `${v.correct}/${v.n}`), tipRow(null, "exact match", pctOf(v.correct, v.n))];
   hover(td, (e) => showTip(e.clientX, e.clientY, content()));
-  focusTip(td, content);
+  focusTip(td, content, "Arrow keys move between cells.");
   return td;
 }
 
@@ -342,37 +379,38 @@ function heatmap() {
   const flip = FLIP.matches;
   table.className = flip ? "heat is-flipped" : "heat";
   if (flip) {
-    const row = (c) => el("tr", {}, [el("th", { scope: "row", class: "rowh", text: c.label }), ...MODELS.map((m) => heatCell(m, c, lenLabel))]);
+    const row = (c) => el("tr", {}, [el("th", { scope: "row", class: "rowh", text: c.label }), ...BOARD.map((m) => heatCell(m, c, lenLabel))]);
     const bodies = work
       ? WORKLOAD.map(([fid]) => el("tbody", {}, [
-        el("tr", { class: "grp" }, [el("th", { scope: "rowgroup", colspan: MODELS.length + 1, text: opName(fid) })]),
+        el("tr", { class: "grp" }, [el("th", { scope: "rowgroup", colspan: BOARD.length + 1, text: opName(fid) })]),
         ...cols.filter((c) => c.group === fid).map(row),
       ]))
       : [el("tbody", {}, cols.map(row))];
     table.replaceChildren(
-      el("colgroup", {}, [el("col", { class: "c-rowh" }), ...MODELS.map(() => el("col"))]),
-      el("thead", {}, [el("tr", {}, [el("th", { class: "sub", text: work ? "Target" : "" }), ...MODELS.map(modelHead)])]),
+      el("colgroup", {}, [el("col", { class: "c-rowh" }), ...BOARD.map(() => el("col"))]),
+      el("thead", {}, [el("tr", {}, [work ? el("th", { class: "sub", text: "Target" }) : el("td"), ...BOARD.map(modelHead)])]),
       ...bodies,
     );
   } else {
     const heads = work
       ? [
-        el("tr", { class: "grp" }, [el("th", { text: "" }), ...WORKLOAD.map(([fid, ws]) => el("th", { colspan: ws.length, scope: "colgroup" }, [el("span", { text: opName(fid) })]))]),
+        el("tr", { class: "grp" }, [el("td"), ...WORKLOAD.map(([fid, ws]) => el("th", { colspan: ws.length, scope: "colgroup" }, [el("span", { text: opName(fid) })]))]),
         el("tr", {}, [el("th", { class: "sub", text: "Workload target" }), ...cols.map((c) => el("th", { scope: "col", text: c.label }))]),
       ]
-      : [el("tr", {}, [el("th", { text: "" }), ...cols.map((c) => el("th", { scope: "col", text: c.label }))])];
+      : [el("tr", {}, [el("td"), ...cols.map((c) => el("th", { scope: "col", text: c.label }))])];
     table.replaceChildren(
       el("colgroup", {}, [el("col", { class: "c-rowh" }), ...cols.map(() => el("col"))]),
       el("thead", {}, heads),
-      el("tbody", {}, MODELS.map((m) => el("tr", {}, [
+      el("tbody", {}, BOARD.map((m) => el("tr", {}, [
         el("th", { scope: "row", class: "rowh" }, [el("span", { class: "mkey" }, [modelKey(m), m.name])]),
         ...cols.map((c) => heatCell(m, c, lenLabel)),
       ]))),
     );
   }
+  roving([...table.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("td")]));
   const key = document.getElementById("heat-key");
   key.hidden = !flip;
-  key.replaceChildren(...MODELS.map((m) => legendItem(modelKey(m), m.name)));
+  key.replaceChildren(...BOARD.map((m) => legendItem(modelKey(m), m.name)));
   const rampBox = document.getElementById("heat-ramp");
   rampBox.replaceChildren(el("span", { text: "0%" }), el("i", { style: `background:linear-gradient(90deg, ${[0, 0.25, 0.5, 0.75, 1].map((t) => ramp(t)).join(",")})` }), el("span", { text: "100%" }));
   boardCaption();
@@ -382,21 +420,23 @@ const boardState = { view: "overall" };
 
 function boardCaption() {
   const cap = document.getElementById("board-cap");
-  document.getElementById("board-scope").textContent = boardState.view === "workload" ? "exact match, 2D workload view" : "exact match, main view";
+  document.getElementById("board-scope").textContent = boardState.view === "workload" ? "Exact match, 2D workload study" : "Exact match, main benchmark";
   if (boardState.view === "overall") {
-    caption(cap, "Correct complete states out of 192 main instances per length; the pooled column counts 768 instances at T = 8–64.",
-      "One instance per trajectory at each length. Empty, invalid, and length-terminated outputs stay in the denominator. Models appear in the study's fixed order, not ranked.");
+    caption(cap, "Correct complete states out of 192 main instances per length; the pooled column counts 768 instances at T = 8–64, and rows are sorted by it.",
+      "One instance per trajectory at each length. Empty, invalid, and length-terminated outputs stay in the denominator.");
     return;
   }
   const n = heatColumns()[0].get(MODELS[0].id).n;
   const lenLabel = heatState.len === "pooled" ? "T = 8–64" : `T = ${heatState.len}`;
-  const scope = heatState.view === "workload" ? "2D workload view" : "main view";
   const notes = {
     task: "Each operation pools 3 dimensions × 8 trajectories per length. These breakdowns describe the sampled conditions, not intrinsic rule difficulty.",
     dimension: "Each dimension pools 8 operations × 8 trajectories per length. Dimension changes geometry, boundary exposure, coordinate arity, and representation length together.",
-    workload: "Each operation sweeps a workload target in 2D, 8 trajectories per target and length. The main-view targets (PAINT 100, REFLECT 64, MIX 12, LAYER 60) reuse main instances.",
+    workload: "Each operation sweeps a workload target in 2D, 8 trajectories per target and length. The main-benchmark targets (PAINT 100, REFLECT 64, MIX 12, LAYER 60) reuse main instances.",
   };
-  caption(cap, `Exact matches out of ${n} instances per cell (${lenLabel}, ${scope}); color shows the same proportion.`, notes[heatState.view]);
+  const text = heatState.view === "workload"
+    ? `Exact matches out of ${n} instances per cell (${lenLabel}, 2D workload study). Each target sets an operation's scale: PAINT ball size, REFLECT box volume, MIX reached region, LAYER component plus boundary.`
+    : `Exact matches out of ${n} instances per cell (${lenLabel}, main benchmark); color shows the same proportion.`;
+  caption(cap, text, notes[heatState.view]);
 }
 
 function initBoard() {
@@ -441,7 +481,7 @@ function lengthSeries() {
 }
 
 function scopeLabel() {
-  if (lenState.view === "overall") return "main view";
+  if (lenState.view === "overall") return "main benchmark";
   if (lenState.view === "dimension") return `d = ${lenState.sub}`;
   return opName(lenState.sub);
 }
@@ -516,7 +556,7 @@ function lengthCaption() {
   const cap = document.getElementById("len-cap");
   if (lenState.view === "overall") {
     caption(cap, "192 instances per model and length; shaded bands are 95% intervals.",
-      "Main view: one instance per trajectory at each length. Intervals come from 2,000 stratified whole-trajectory bootstrap replicates.");
+      "Main benchmark: one instance per trajectory at each length. Intervals come from 2,000 stratified whole-trajectory bootstrap replicates.");
   } else if (lenState.view === "dimension") {
     caption(cap, `d = ${lenState.sub}: 64 instances per model and length (8 operations × 8 trajectories).`,
       "Dimension changes geometry, boundary exposure, coordinate arity, and representation length together.");
@@ -600,10 +640,11 @@ function initTabs(list) {
   tabs.forEach((t, i) => {
     t.addEventListener("click", () => select(t));
     t.addEventListener("keydown", (e) => {
-      const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-      if (!d) return;
+      const n = tabs.length;
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1 + n, Home: 0, End: n - 1 }[e.key];
+      if (next === undefined) return;
       e.preventDefault();
-      select(tabs[(i + d + tabs.length) % tabs.length], true);
+      select(tabs[next % n], true);
     });
   });
   select(tabs.find((t) => t.getAttribute("aria-selected") === "true") || tabs[0]);
@@ -632,6 +673,7 @@ function extentChart(width) {
   });
   root.append(axis);
   root.append(svg("text", { x: (f.x0 + f.x1) / 2, y: H - 4, "text-anchor": "middle", class: "axis-title", text: "Median wrong cells (log scale)" }));
+  const stops = MODELS.map(() => []);
   MODELS.forEach((m, k) => {
     const cy = f.cy(k);
     root.append(f.nameAt(k, m.name));
@@ -654,10 +696,12 @@ function extentChart(width) {
         tipSub(`${r.valid_wrong_n} valid incorrect answers of ${r.n}`),
       ];
       hover(g, (e) => showTip(e.clientX, e.clientY, content()));
-      focusTip(g, content);
+      focusTip(g, content, "Arrow keys move between markers.");
       root.append(g);
+      stops[k].push(g);
     }
   });
+  roving(stops);
   return root;
 }
 
@@ -801,11 +845,11 @@ function baseLegend() {
   );
 }
 
-// ---------- Finding 3b: changed / preserved error composition ----------
+// ---------- Finding 3b: changed / unchanged error composition ----------
 const cuState = { T: 1 };
 const CU = [
   ["changed_only", "C only · missed or wrong updates"],
-  ["unchanged_only", "U only · corrupted preserved cells"],
+  ["unchanged_only", "U only · corrupted unchanged cells"],
   ["both", "Both"],
 ];
 const CU_COLORS = ["#35d0f0", "#e0a43a", "#8b7cf6"];
@@ -873,28 +917,32 @@ function cuLegend(rerender) {
 // ---------- Footnotes ----------
 function notes() {
   const pre = R.prefix.slice().sort((a, b) => a.wrong_then_correct - b.wrong_then_correct);
+  const lo = pre[0], hi = pre[pre.length - 1];
   document.getElementById("note-prefix").textContent =
-    `A later prefix is solved after an earlier one fails on ${pre[0].wrong_then_correct} (${nameOf(pre[0].model)}) to ${pre[pre.length - 1].wrong_then_correct} (${nameOf(pre[pre.length - 1].model)}) of 192 trajectories, so each length is scored on its own.`;
+    `A model sometimes solves a longer prefix after failing a shorter one: on ${lo.wrong_then_correct} (${nameOf(lo.model)}) to ${hi.wrong_then_correct} (${nameOf(hi.model)}) of ${lo.n} trajectories.`;
   const d = R.delivery;
   const most = d.slice().sort((a, b) => b.empty - a.empty)[0];
   const least = d.slice().sort((a, b) => a.empty - b.empty)[0];
   document.getElementById("note-delivery").textContent =
-    `Empty outcomes, from ${least.empty} (${nameOf(least.model)}) to ${most.empty} (${nameOf(most.model)}; ${most.length_terminated} hit the length limit) of ${fmt.int(d[0].n)} requests, score as wrong.`;
+    `Each model got ${fmt.int(d[0].n)} requests; empty responses range from ${least.empty} (${nameOf(least.model)}) to ${most.empty} (${nameOf(most.model)}, ${most.length_terminated} of them stopped at the length limit).`;
   const g = R.totals.gold_checks;
+  const total = (k) => g.reduce((s, x) => s + x[k], 0);
   document.getElementById("note-oracle").textContent =
-    `A second rule implementation replays ${fmt.int(g[0].selected_states)} states per cohort (${fmt.int(g[0].replayed_events)} prefix events) with ${g.reduce((s, x) => s + x.mismatches, 0)} mismatches.`;
+    `A separately written implementation of the rules recomputes all ${fmt.int(total("selected_states"))} reference states (${fmt.int(total("replayed_events"))} replayed events) with ${total("mismatches")} mismatches.`;
 }
 
 export function initCharts(results) {
   R = results;
   MODELS = results.models;
+  const pooled = (m) => POOLED.reduce((s, t) => s + lengthRow(m.id, t).correct, 0);
+  BOARD = [...MODELS].sort((a, b) => pooled(b) - pooled(a));
   bindFacts();
   initBoard();
   initLength();
 
   extentLegend();
   responsive(document.getElementById("extent-chart"), extentChart);
-  caption(document.getElementById("extent-cap"), "Median wrong cells among valid incorrect answers on the main view; n counts those answers.",
+  caption(document.getElementById("extent-cap"), "Median wrong cells among valid incorrect answers on the main benchmark; n counts those answers.",
     "Hover a marker for the IQR, P90, and answers within 5 cells. These outcome-selected statistics complement exact match on the full set.");
   pairLegend();
   responsive(document.getElementById("pair-chart"), pairChart);
@@ -909,7 +957,7 @@ export function initCharts(results) {
     "The right column counts answers above the copy-initial baseline out of each model's valid answers (of 192). Neither baseline solves any of the 960 positive-length main instances.");
   const cuRun = responsive(document.getElementById("cu-chart"), cuChart);
   cuLegend(cuRun);
-  caption(document.getElementById("cu-cap"), "Valid incorrect answers by where their wrong cells fall: changed cells (C), preserved cells (U), or both.",
+  caption(document.getElementById("cu-cap"), "Valid incorrect answers by where their wrong cells fall: changed cells (C), unchanged cells (U), or both.",
     "C holds cells whose reference final value differs from the initial value; U holds cells whose final value is unchanged. At T = 64 most failures combine both kinds.");
   initTabs(document.getElementById("f3-tabs"));
 

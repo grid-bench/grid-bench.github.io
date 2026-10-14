@@ -10,6 +10,7 @@
     radial-gradient(620px 340px at var(--glow-at), var(--glow-c), transparent 70%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
     var(--surface);
+  border-radius: 24px;
   transition: border-color .3s;
 }
 :is(#results, #leaderboard) .rcard:hover { border-color: var(--line-strong); }
@@ -60,7 +61,6 @@
 :is(#results, #leaderboard) .lb-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 8px; }
 :is(#results, #leaderboard) .lb-title { margin: 0; font: 600 23px/1.2 var(--font-display); letter-spacing: -0.02em; }
 :is(#results, #leaderboard) .lb-title span { font: 500 14px/1 var(--font-sans); letter-spacing: 0; color: var(--text-2); }
-:is(#results, #leaderboard) .lb-title span::first-letter { text-transform: uppercase; }
 
 :is(#results, #leaderboard) .lb { width: 100%; border-collapse: collapse; }
 :is(#results, #leaderboard) .lb th, :is(#results, #leaderboard) .lb td { height: 48px; padding: 0 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -95,7 +95,9 @@
 :is(#results, #leaderboard) .heat thead tr.grp th span { display: block; margin: 0 4px; padding-bottom: 6px; border-bottom: 1px solid var(--line-strong); }
 :is(#results, #leaderboard) .heat thead th.sub { text-align: left; font-weight: 500; letter-spacing: 0; }
 :is(#results, #leaderboard) .heat td { height: 38px; min-width: 44px; text-align: center; border-radius: 8px; font-variant-numeric: tabular-nums; font-weight: 500; cursor: default; transition: outline-color .15s; outline: 1px solid transparent; }
-:is(#results, #leaderboard) .heat td:hover, :is(#results, #leaderboard) .heat td:focus-visible { outline: 1px solid var(--text-2); outline-offset: 0; }
+:is(#results, #leaderboard) .heat tbody td:hover, :is(#results, #leaderboard) .heat tbody td:focus-visible { outline: 1px solid var(--text-2); outline-offset: 0; }
+/* Empty corner cell above the row headers. */
+:is(#results, #leaderboard) .heat thead td { height: auto; min-width: 0; padding: 0; }
 :is(#results, #leaderboard) .heat th.rowh { text-align: left; font: 500 14px/1.2 var(--font-sans); letter-spacing: 0; color: var(--text); white-space: nowrap; padding: 0 12px 0 0; position: sticky; left: 0; z-index: 1; background: transparent; }
 :is(#results, #leaderboard) .ramp { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 :is(#results, #leaderboard) .ramp i { width: 120px; height: 8px; border-radius: 4px; display: block; }

@@ -35,20 +35,26 @@ A static site with no build step and no runtime dependencies beyond Google Fonts
 | Path | Contents |
 | --- | --- |
 | `index.html` | All page copy and section markup |
-| `assets/css/site.css` | Design tokens (dark default, light theme) and components |
-| `assets/js/main.js` | Theme, navigation, data loading, hero animation |
+| `assets/css/base.css` | Design tokens, fixed dark theme, nav, hero, footer, shared components |
+| `assets/css/{why,ops,instance,scale,results,play,use}.css` | Section styles |
+| `assets/js/main.js` | Navigation, reveal on scroll, data loading, hero animation |
+| `assets/js/backdrop.js` | Interactive lattice backdrop |
+| `assets/js/util.js` | Shared colors, DOM helpers, tooltip, tilt |
+| `assets/js/optext.js` | Shared operation wording |
 | `assets/js/voxel.js` | 3D voxel renderer for reference trajectories |
 | `assets/js/grid2d.js` | Canvas renderer for 2D worlds and 4D slice arrays |
-| `assets/js/task.js` | Figure 1 explorer beside the formal prompt |
-| `assets/js/families.js` | Eight operation cards and rule dialogs |
-| `assets/js/coverage.js` | Pipeline art, prefix diagram, dimensions, design matrix |
-| `assets/js/play.js` | "Can you predict it?" practice puzzles |
-| `assets/js/charts.js` | Leaderboard, findings charts, results explorer |
+| `assets/js/why.js` | 01 figure: the paper's Figure 1 history, W0 to W3 |
+| `assets/js/charts.js` | 02 leaderboard and 06 findings |
+| `assets/js/families.js` | 03 eight operation cards and rule dialogs |
+| `assets/js/task.js` | 04 one instance, start to finish |
+| `assets/js/coverage.js` | 05 three geometries, prefixes, design formula |
+| `assets/js/play.js` | 07 practice puzzles |
+| `assets/js/use.js` | 08 commands, authors, BibTeX |
 | `assets/data/*.json` | Exported data (see below) with `manifest.json` hashes |
 | `tools/export_data.py` | Regenerates `assets/data/` from the research workspace |
 
-Page order: hero → task → evaluation → operations → coverage → play → results →
-get started → citation.
+Page order: hero → why → leaderboard → operations → instance → scale → results →
+play → use & cite.
 
 ## Data provenance
 
@@ -88,13 +94,17 @@ python3 -m http.server 8765
 
 ## Before launch
 
-1. Replace each `is-pending` element in `index.html` (hero buttons, nav Paper
-   button, Get started links, citation) with a link to its verified destination.
-2. Add the arXiv identifier to the BibTeX in `assets/js/main.js` (`initCitation`).
+1. Replace the three `.res-item` spans and the `.soon` label in the hero `.res`
+   group, and the three `.res-pill` spans in #use (`.cta-res`), with links to
+   their verified destinations; remove the "Links go live at public launch." note.
+2. Add the arXiv identifier to `BIB_LINES` in `assets/js/use.js`, replacing
+   `note = {Paper identifier forthcoming}`.
 3. Confirm the release revision matches `assets/data/manifest.json` source hashes.
 4. Regenerate `assets/img/og-image.png` if the hero changes.
 5. Enable GitHub Pages only with the project owner's authorization.
 
 Release maintainer: Zixiang Xu (`xzx34`). Paper authorship and release ownership
-are separate metadata. The site carries no corporate logos, sponsorship claims,
-internal review records, manuscript acknowledgments, or template credits.
+are separate metadata. Affiliation logos appear only as an evenly weighted row
+identifying the authors' institutions, with a footer note that Grid-Bench is not
+an official product of any listed organization. The site carries no sponsorship
+claims, internal review records, manuscript acknowledgments, or template credits.

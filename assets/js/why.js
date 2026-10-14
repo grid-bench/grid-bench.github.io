@@ -12,7 +12,7 @@ const COLORS = {
 function arrowLabel(raw) {
   if (raw.op === "SET") return `SET [${raw.p.join(",")}] ← ${raw.v}`;
   const dir = raw.axis === 1 ? (raw.direction > 0 ? "right" : "left") : raw.direction > 0 ? "down" : "up";
-  return `MOVE ${dir}, up to ${raw.k}`;
+  return `MOVE ${dir}, max ${raw.k}`;
 }
 
 // One 4x4 panel. `mark` adds the annotation for the step that produced this state.
@@ -20,7 +20,8 @@ function panel(state, shape, mark) {
   const [R, C] = shape;
   const s = 30, g = 4, pad = 2;
   const W = pad * 2 + C * s, H = pad * 2 + R * s;
-  const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+  // Decorative: the figcaptions and the caption below the figure carry the content.
+  const root = svg("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" });
   const at = (r, c) => [pad + c * s + g / 2, pad + r * s + g / 2];
   state.forEach((v, i) => {
     const r = Math.floor(i / C), c = i % C;

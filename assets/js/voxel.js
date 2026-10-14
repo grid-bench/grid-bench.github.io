@@ -1,7 +1,7 @@
 // Orthographic voxel renderer for 3D worlds. States come from exported reference
 // executions; this file only draws them and animates between consecutive states.
 
-import { cellPalette, fitCanvas, shade, theme, reducedMotion } from "./util.js";
+import { cellPalette, fitCanvas, shade, reducedMotion } from "./util.js";
 
 const GAP = 0.2; // fraction of a cell left empty around each cube
 const PITCH = 0.56; // camera elevation in radians
@@ -21,6 +21,7 @@ export class VoxelWorld {
     this.palette = () => "#888";
     this.running = false;
     this.last = 0;
+    this.lastDraw = 0; // time of the last frame start() drew
     this.dragging = false;
     if (interactive) this.#bindDrag();
     this.ro = new ResizeObserver(() => this.draw());
@@ -67,11 +68,6 @@ export class VoxelWorld {
     this.draw();
   }
 
-  refreshPalette() {
-    this.palette = cellPalette(this.values || [0, 1]);
-    this.draw();
-  }
-
   // Apply a sparse diff [[index, value], ...] with grow/shrink/recolor animation.
   applyDiff(diff, dur = 380) {
     const now = performance.now();
@@ -105,6 +101,7 @@ export class VoxelWorld {
     if (this.running) return;
     this.running = true;
     this.last = performance.now();
+    const rm = reducedMotion();
     const loop = (now) => {
       if (!this.running) return;
       const dt = Math.min(0.05, (now - this.last) / 1000);
@@ -113,11 +110,17 @@ export class VoxelWorld {
         if (Math.abs(this.vel) > 0.0004) {
           this.yaw += this.vel;
           this.vel *= 0.94;
-        } else if (!reducedMotion()) {
+        } else if (!rm) {
           this.yaw += this.spin * dt;
         }
       }
-      this.draw(now);
+      // Draw at about 30 fps while idle; the yaw still advances by dt every frame, so the
+      // rotation speed is unchanged. Dragging and flinging draw every frame.
+      const flinging = Math.abs(this.vel) > 0.0004;
+      if (this.dragging || flinging || now - this.lastDraw >= 30) {
+        this.draw(now);
+        this.lastDraw = now;
+      }
       this.raf = requestAnimationFrame(loop);
     };
     this.raf = requestAnimationFrame(loop);
@@ -132,7 +135,6 @@ export class VoxelWorld {
     const [W, H, ctx] = fitCanvas(this.canvas);
     ctx.clearRect(0, 0, W, H);
     const [X, Y, Z] = this.shape;
-    const dark = theme() === "dark";
     const cos = Math.cos(this.yaw);
     const sin = Math.sin(this.yaw);
     const cp = Math.cos(PITCH);
@@ -151,10 +153,8 @@ export class VoxelWorld {
     };
 
     // Floor grid and bounding box.
-    const lineColor = dark ? "rgba(140,170,215,0.12)" : "rgba(30,60,110,0.12)";
-    const boxColor = dark ? "rgba(140,170,215,0.22)" : "rgba(30,60,110,0.22)";
     ctx.lineWidth = 1;
-    ctx.strokeStyle = lineColor;
+    ctx.strokeStyle = "rgba(140,170,215,0.12)";
     ctx.beginPath();
     for (let i = 0; i <= X; i++) {
       const a = proj(i, 0, 0), b = proj(i, Y, 0);
@@ -167,7 +167,7 @@ export class VoxelWorld {
     ctx.stroke();
     const corners = [];
     for (const x of [0, X]) for (const y of [0, Y]) for (const z of [0, Z]) corners.push([x, y, z]);
-    ctx.strokeStyle = boxColor;
+    ctx.strokeStyle = "rgba(140,170,215,0.22)";
     ctx.beginPath();
     for (let a = 0; a < 8; a++) for (let b = a + 1; b < 8; b++) {
       const d = corners[a].reduce((s, v, k) => s + (v !== corners[b][k]), 0);
@@ -212,7 +212,7 @@ export class VoxelWorld {
         [[fx, y0, z0], [fx, y1, z0], [fx, y1, z1], [fx, y0, z1], faceX],
         [[x0, fy, z0], [x1, fy, z0], [x1, fy, z1], [x0, fy, z1], faceY],
       ];
-      if (pulse > 0 && dark && this.glow) {
+      if (pulse > 0 && this.glow) {
         const c = proj(mx, my, mz);
         const g = ctx.createRadialGradient(c[0], c[1], 0, c[0], c[1], scale * 1.3);
         g.addColorStop(0, `rgba(80,220,255,${0.32 * pulse})`);
@@ -227,7 +227,7 @@ export class VoxelWorld {
         ctx.closePath();
         ctx.fillStyle = color;
         ctx.fill();
-        ctx.strokeStyle = dark ? `rgba(255,255,255,${0.1 + pulse * 0.5})` : `rgba(255,255,255,${0.35 + pulse * 0.4})`;
+        ctx.strokeStyle = `rgba(255,255,255,${0.1 + pulse * 0.5})`;
         ctx.lineWidth = 0.8;
         ctx.stroke();
       }

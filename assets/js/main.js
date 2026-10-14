@@ -17,18 +17,27 @@ const VERB = {
 };
 
 function initNav() {
+  const nav = document.getElementById("nav");
   const links = document.getElementById("nav-links");
   const toggle = document.getElementById("nav-toggle");
   const bar = document.getElementById("progress");
+  const isOpen = () => links.classList.contains("is-open");
+  const close = () => {
+    links.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+  };
   toggle.addEventListener("click", () => {
     const open = links.classList.toggle("is-open");
     toggle.setAttribute("aria-expanded", String(open));
   });
   links.addEventListener("click", (e) => {
-    if (e.target.closest("a")) {
-      links.classList.remove("is-open");
-      toggle.setAttribute("aria-expanded", "false");
-    }
+    if (e.target.closest("a")) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen()) { close(); toggle.focus(); }
+  });
+  document.addEventListener("pointerdown", (e) => {
+    if (isOpen() && !nav.contains(e.target)) close();
   });
   const anchors = [...links.querySelectorAll("a")];
   const sections = anchors.map((a) => document.querySelector(a.getAttribute("href")));
@@ -39,7 +48,10 @@ function initNav() {
     bar.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max) : 0})`;
     let current = -1;
     sections.forEach((s, i) => { if (s && s.getBoundingClientRect().top < window.innerHeight * 0.4) current = i; });
-    anchors.forEach((a, i) => a.classList.toggle("is-active", i === current));
+    anchors.forEach((a, i) => {
+      a.classList.toggle("is-active", i === current);
+      if (i === current) a.setAttribute("aria-current", "location"); else a.removeAttribute("aria-current");
+    });
   };
   window.addEventListener("scroll", () => {
     if (!ticking) { ticking = true; requestAnimationFrame(update); }
@@ -108,7 +120,8 @@ function typeInto(node, text, { speed = 55 } = {}) {
 function initHero(hero) {
   const canvas = document.getElementById("hero-canvas");
   const panel = document.getElementById("hero-world");
-  const world = new VoxelWorld(canvas, { autoRotate: 0.14, yaw: 0.75 });
+  const SPIN = 0.14;
+  const world = new VoxelWorld(canvas, { autoRotate: SPIN, yaw: 0.75 });
   const hud = {
     world: document.getElementById("hud-world"),
     t: document.getElementById("hud-t"),
@@ -119,19 +132,23 @@ function initHero(hero) {
   };
   const pauseBtn = document.getElementById("hero-pause");
   const pauseIcon = document.getElementById("hero-pause-icon");
-  let w = 0, t = 0, timer = null, paused = reducedMotion(), visible = true, cancelType = () => {};
+  // The render loop and the step timer run only while the window is on screen,
+  // the tab is visible, and the animation is not paused (paused from load under
+  // reduced motion). A stopped world still redraws on drag.
+  let w = 0, t = 0, timer = null, paused = reducedMotion(), onScreen = true, settle = 0, cancelType = () => {};
 
   const logLine = (cls, parts) => {
     const line = el("div", { class: `ln ${cls}` }, parts);
     hud.log.append(line);
-    while (hud.log.children.length > 5) hud.log.firstElementChild.remove();
+    while (hud.log.children.length > 3) hud.log.firstElementChild.remove();
   };
 
   const showWorld = () => {
     const cur = hero.worlds[w];
-    world.setWorld(cur.shape, cur.values, cur.initial);
+    // A stopped loop cannot grow staggered cubes, so a paused world appears at full size.
+    world.setWorld(cur.shape, cur.values, cur.initial, { stagger: !paused });
     t = 0;
-    hud.world.textContent = `reference-sim · ${cur.op} · ${cur.shape.join("×")}`;
+    hud.world.replaceChildren(el("span", { class: "win-src", text: "reference-sim · " }), `${cur.op} · ${cur.shape.join("×")}`);
     hud.n.textContent = cur.steps.length;
     hud.t.textContent = "0";
     hud.progress.style.width = "0%";
@@ -158,9 +175,13 @@ function initHero(hero) {
       s.text.slice(s.op.length),
     ]);
   };
-  const schedule = () => {
+  const sync = () => {
+    clearTimeout(settle);
+    const live = onScreen && !document.hidden;
+    world.spin = paused ? 0 : SPIN;
+    if (live && !paused) world.start(); else { world.stop(); world.draw(); }
     clearInterval(timer);
-    if (!paused && visible) timer = setInterval(step, 760);
+    timer = live && !paused ? setInterval(step, 760) : null;
   };
   const setPauseIcon = () => {
     pauseIcon.innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
@@ -169,24 +190,24 @@ function initHero(hero) {
   pauseBtn.addEventListener("click", () => {
     paused = !paused;
     setPauseIcon();
-    schedule();
+    if (!paused) { sync(); return; }
+    // Stop events and rotation at once; keep drawing briefly so cubes already
+    // growing or shrinking (up to about 1 s for a freshly loaded world) settle.
+    clearInterval(timer);
+    timer = null;
+    world.spin = 0;
+    clearTimeout(settle);
+    settle = setTimeout(() => { if (paused) sync(); }, 1100);
   });
   setPauseIcon();
   document.getElementById("hero-next").addEventListener("click", () => {
-    world.clear();
     w = (w + 1) % hero.worlds.length;
+    if (paused) { showWorld(); return; }
+    world.clear();
     setTimeout(showWorld, 300);
   });
-  onVisible(canvas, (on) => {
-    visible = on;
-    if (on) world.start(); else world.stop();
-    schedule();
-  }, "0px");
-  document.addEventListener("visibilitychange", () => {
-    visible = !document.hidden;
-    if (document.hidden) world.stop(); else world.start();
-    schedule();
-  });
+  onVisible(canvas, (on) => { onScreen = on; sync(); }, "0px");
+  document.addEventListener("visibilitychange", sync);
   // Tilt the window with the pointer, but not while the world is being dragged.
   canvas.addEventListener("pointerdown", () => { panel.dataset.noTilt = "1"; panel.style.transform = ""; });
   window.addEventListener("pointerup", () => { delete panel.dataset.noTilt; });

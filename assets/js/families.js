@@ -1,4 +1,4 @@
-// Section 01: eight operation cards. Each card replays a real benchmark trajectory,
+// Section 03: eight operation cards. Each card replays a real benchmark trajectory,
 // either the 2D 16x16 world (GridCanvas) or the 3D 6x6x7 world (VoxelWorld). A dialog
 // holds the worked example and the exact rule text. Every state comes from exported
 // reference execution; nothing here re-implements a transition rule.
@@ -9,21 +9,10 @@ import {
   applyDiff, cellPalette, coordOf, el, hideTip, inkOn, onVisible, reducedMotion,
   showTip, svg, tilt, tipRow, tipSub, tipTitle,
 } from "./util.js";
+import { OP_ONE_LINER, SET_RULE, W_RULE } from "./optext.js";
 
 // One hue per family, walking the site gradient from cyan through violet to magenta.
 const ACCENT = ["#35d0f0", "#45c3ff", "#6bb0ff", "#8f9fff", "#ad92ff", "#cc88ee", "#e481d0", "#f27aa8"];
-
-// One-line descriptions from the public repository README.
-const ONE_LINER = {
-  metric_paint: "Replace a selected value inside a Manhattan ball",
-  box_reflection: "Reflect values within a rectangular region",
-  local_stencil: "Aggregate neighboring values in a metric region",
-  occluded_mix: "Aggregate values in an occupied, connected neighborhood",
-  component_relabel: "Change the label of a connected component",
-  boundary_layer: "Grow or erode a connected region",
-  obstructed_motion: "Move selected values along an axis around obstructions",
-  aggregating_compression: "Pack and merge equal values along axis-aligned lines",
-};
 
 // Spatial selection and state transformation, as in the paper's family table.
 const TABLE = {
@@ -36,9 +25,6 @@ const TABLE = {
   obstructed_motion: ["Entities of one label and the traversed positions on axis-parallel lines.", "Move entities in a prescribed order until obstructed or the step limit is reached."],
   aggregating_compression: ["Every line parallel to a selected axis.", "Remove gaps, merge adjacent equal values once per pair, and pack toward one boundary."],
 };
-
-// The shared SET event, verbatim from the prompt's COMMON EVENT block.
-const COMMON_EVENT = "SET(p,v): set cell p to v.";
 
 const STEP_MS = 1100; // one event per card per tick
 const SPIN_IDLE = 0.12; // rad/s while a 3D card is on screen
@@ -207,7 +193,7 @@ function buildCard(fam, w3, k) {
       el("div", { class: "op-tl" }, [el("span", { class: "op-t" }, ["T ", tNum]), el("span", { class: "op-prog" }, [prog]), nNum]),
       ev,
     ]),
-    el("p", { class: "op-desc", id: descId, text: sentence(ONE_LINER[fam.id] || fam.summary) }),
+    el("p", { class: "op-desc", id: descId, text: sentence(OP_ONE_LINER[fam.op] || fam.summary) }),
   ]);
 
   const c = { k, fam, w3, card, stage, c2, c3, tNum, nNum, ev, prog, visible: false, timer: 0, delay: 320 + k * 140, hover: false, spin: 0, lastNow: 0, animUntil: 0, world: null, p3: null };
@@ -237,6 +223,11 @@ function buildCard(fam, w3, k) {
   card.addEventListener("keydown", (e) => {
     if (e.target !== card) return;
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDialog(k); }
+  });
+
+  // On phones the cards sit in a horizontal scroll row; bring a focused card fully into it.
+  card.addEventListener("focus", () => {
+    if (matchMedia("(max-width: 640px)").matches) card.parentElement.scrollIntoView({ block: "nearest", inline: "start" });
   });
 
   // Tilt the card, but hold it flat over a 2D stage so cell hit-testing stays exact.
@@ -344,13 +335,14 @@ function renderDialog(k) {
   dialog.style.setProperty("--fam", accent);
   dialog.replaceChildren(
     el("span", { class: "dlg-glow", "aria-hidden": "true" }),
+    // A direct child of the dialog, so it can stay pinned while the dialog scrolls.
+    close,
     el("header", { class: "dlg-head" }, [
       el("div", { class: "dlg-id" }, [
         el("span", { class: "dlg-op", text: fam.op }),
         el("h3", { id: "dlg-title", text: fam.name }),
-        el("p", { class: "dlg-one", text: sentence(ONE_LINER[fam.id] || fam.summary) }),
+        el("p", { class: "dlg-one", text: sentence(OP_ONE_LINER[fam.op] || fam.summary) }),
       ]),
-      close,
     ]),
     el("div", { class: "dlg-body" }, [
       el("section", { class: "dlg-ex", "aria-labelledby": "dlg-ex-title" }, [
@@ -380,14 +372,18 @@ function renderDialog(k) {
       ].map((n) => { n.setAttribute("role", "listitem"); return n; })),
       el("details", { class: "disclosure" }, [
         el("summary", { text: "Exact rule text from the prompt" }),
-        el("pre", { class: "rule-text", text: `COMMON EVENT\n${COMMON_EVENT}\n\nFAMILY RULE\n${fam.rule}\n\nEXAMPLE\n${ex.card}` }),
+        // W is defined on the prompt's last SPACE line, directly before COMMON EVENT.
+        el("pre", {
+          class: "rule-text",
+          text: [fam.rule.includes("W(") && W_RULE, `COMMON EVENT\n${SET_RULE}`, `FAMILY RULE\n${fam.rule}`, `EXAMPLE\n${ex.card}`]
+            .filter(Boolean).join("\n\n"),
+        }),
       ]),
     ]),
     el("footer", { class: "dlg-foot" }, [
       el("p", { class: "dlg-src" }, [
-        "Card animation: ",
+        `Card animation: the first ${src.steps.length} events of `,
         el("code", { text: shortSource(src.source) }),
-        `, first ${src.steps.length} events.`,
       ]),
       el("div", { class: "dlg-navs" }, [navBtn(prev, "prev"), navBtn(next, "next")]),
     ]),
@@ -423,6 +419,23 @@ export function initFamilies(data, hero) {
     gridEl.append(el("div", { class: "op-cell reveal" }, [c.card]));
     c.mount();
   });
+
+  // Phones: position dots under the swipeable row (hidden by CSS on wider screens).
+  const dots = document.getElementById("ops-dots");
+  if (dots) {
+    dots.replaceChildren(...S.cards.map(() => el("i")));
+    const cells = [...gridEl.children];
+    let raf = 0;
+    const mark = () => {
+      raf = 0;
+      const step = cells[1] ? cells[1].offsetLeft - cells[0].offsetLeft : 1;
+      const end = gridEl.scrollLeft >= gridEl.scrollWidth - gridEl.clientWidth - 2;
+      const k = end ? cells.length - 1 : Math.round(gridEl.scrollLeft / step);
+      [...dots.children].forEach((d, i) => d.classList.toggle("is-on", i === k));
+    };
+    gridEl.addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(mark); }, { passive: true });
+    mark();
+  }
 
   // Close on a backdrop click: both the press and the release must land outside the dialog box,
   // so a click on the dialog's own padding or a text drag that ends outside does not close it.
@@ -500,6 +513,7 @@ export function initFamilies(data, hero) {
   info.addEventListener("focus", showInfo);
   info.addEventListener("blur", hideTip);
   info.addEventListener("click", showInfo);
+  info.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });
 
   document.addEventListener("visibilitychange", () => {
     S.cards.forEach(sync);

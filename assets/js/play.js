@@ -1,24 +1,11 @@
-// Section 05: the reader paints the final grid of a small practice world,
+// Section 07: the reader paints the final grid of a small practice world,
 // then checks it cell by cell against the exported reference states.
 
+import { OP_ONE_LINER, SET_RULE, W_RULE } from "./optext.js";
 import { cellPalette, el, inkOn, onVisible, reducedMotion, svg } from "./util.js";
 
 const STORE = "gb-solved";
 
-// One-line operation descriptions from the public README.
-const DESC = {
-  PAINT: "Replace a selected value inside a Manhattan ball.",
-  REFLECT: "Reflect values within a rectangular region.",
-  STENCIL: "Aggregate neighboring values in a metric region.",
-  MIX: "Aggregate values in an occupied, connected neighborhood.",
-  RELABEL: "Change the label of a connected component.",
-  LAYER: "Grow or erode a connected region.",
-  MOVE: "Move selected values along an axis around obstructions.",
-  COMPRESS: "Pack and merge equal values along axis-aligned lines.",
-};
-// Exact lines from the formal prompt, appended to the rule when the puzzle uses them.
-const SET_RULE = "SET(p,v): set cell p to v.";
-const W_RULE = "W(x) denotes the value of cell x immediately before the current event.";
 const HINT = window.matchMedia("(pointer: coarse)").matches
   ? "Pick a value, then tap cells to paint."
   : "Pick a value, then click or drag across cells to paint.";
@@ -339,7 +326,7 @@ export function initPlay(data) {
     brush = p.values.find((v) => v !== 0) ?? 0;
     focusIndex = 0;
     opEl.textContent = p.op;
-    descEl.textContent = DESC[p.op] || "";
+    descEl.textContent = OP_ONE_LINER[p.op] || "";
     const extra = [];
     if (p.rule.includes("W(")) extra.push(W_RULE);
     if (p.events.some((e) => e.startsWith("SET("))) extra.push(SET_RULE);

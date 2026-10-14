@@ -1,4 +1,4 @@
-/* Section 01: eight operation families. Each card carries its own accent in --fam. */
+/* Section 03: eight operation families. Each card carries its own accent in --fam. */
 
 /* --muted is about 4.3:1 on the card surface; small text in this section uses a lighter mix (about 6.2:1). */
 #operations { --muted-hi: color-mix(in srgb, var(--muted) 55%, var(--text-2)); }
@@ -6,7 +6,7 @@
 /* ---------- Toolbar ---------- */
 .ops-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 18px; margin: -8px 0 26px; }
 .ops-dim button { display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 16px; font-weight: 500; }
-.ops-dim-shape { font: 500 11.5px/1 var(--font-mono); opacity: .62; }
+.ops-dim-shape { font: 500 11.5px/1 var(--font-mono); opacity: .75; }
 .ops-hint { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted-hi); }
 .ops-pause { margin-left: auto; color: var(--text-2); }
 .ops-pause svg { width: 14px; height: 14px; }
@@ -134,7 +134,10 @@ dialog.op-dialog[open]::backdrop { animation: dlg-fade .3s ease; }
   background: radial-gradient(300px 240px at 100% 0%, color-mix(in srgb, var(--fam) 24%, transparent), transparent 75%);
 }
 
-.dlg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 26px 28px 8px; }
+/* The close button is a direct child of the dialog, so it stays pinned while the dialog scrolls.
+   Its negative bottom margin lets the header start at the dialog top; the header reserves room on the right. */
+.op-dialog > .dlg-x { position: sticky; top: 16px; z-index: 3; margin: 26px 28px -64px auto; background: var(--surface); }
+.dlg-head { padding: 26px 82px 8px 28px; }
 .dlg-op { font: 600 15px/1 var(--font-mono); letter-spacing: .02em; color: var(--fam); text-shadow: 0 0 22px color-mix(in srgb, var(--fam) 50%, transparent); }
 .dlg-head h3 { margin: 10px 0 0; font: 700 clamp(28px, 4vw, 36px)/1.05 var(--font-display); letter-spacing: -0.03em; }
 .dlg-one { margin: 10px 0 0; font-size: 16px; color: var(--text-2); }
@@ -144,7 +147,7 @@ dialog.op-dialog[open]::backdrop { animation: dlg-fade .3s ease; }
   transition: color .2s, border-color .2s, transform .25s, background .2s;
 }
 .dlg-x svg { width: 16px; height: 16px; }
-.dlg-x:hover { color: var(--text); border-color: var(--text-2); transform: rotate(90deg); background: rgba(255, 255, 255, .06); }
+.dlg-x:hover { color: var(--text); border-color: var(--text-2); transform: rotate(90deg); background: color-mix(in srgb, var(--surface) 88%, #fff); }
 
 .dlg-body { padding: 18px 28px 26px; display: grid; gap: 20px; }
 .dlg-ex {
@@ -200,18 +203,33 @@ dialog.op-dialog[open]::backdrop { animation: dlg-fade .3s ease; }
 html:has(#op-dialog[open]) { overflow: hidden; scrollbar-gutter: stable; }
 html:has(#op-dialog[open]) body { overflow-x: clip; }
 
+.ops-dots { display: none; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1080px) {
   .ops { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 }
 @media (max-width: 640px) {
-  .ops { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  /* Phones: one swipeable row instead of eight stacked cards; the next card peeks in as the cue.
+     The top padding leaves room for a focused card's lift and focus ring. */
+  .ops {
+    display: flex; gap: 12px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none;
+    margin: -10px calc(-1 * var(--gutter)) -4px; padding: 14px var(--gutter) 12px;
+  }
+  .ops::-webkit-scrollbar { display: none; }
+  .ops::before { inset: 0; }
+  .ops > .op-cell { flex: 0 0 min(84%, 340px); scroll-snap-align: start; }
+  .ops-dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+  .ops-dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(148, 170, 205, .28); transition: width .25s ease, background .25s ease; }
+  .ops-dots i.is-on { width: 18px; background: var(--accent); }
   .ops-bar { gap: 12px; margin-top: -12px; }
   .ops-hint { order: 3; flex-basis: 100%; font-size: 13.5px; }
   .op-card { padding: 16px 16px 18px; }
   .op-step, .op-ev { font-size: 12px; }
   dialog.op-dialog { width: calc(100% - 20px); max-width: calc(100% - 20px); max-height: calc(100% - 24px); border-radius: 18px; }
-  .dlg-head { padding: 20px 18px 6px; }
+  .op-dialog > .dlg-x { top: 12px; margin: 20px 18px -58px auto; }
+  .dlg-head { padding: 20px 68px 6px 18px; }
   .dlg-body { padding: 14px 18px 22px; gap: 16px; }
   .dlg-ex { padding: 14px 14px 12px; }
   .strip-grid { grid-template-columns: minmax(0, 1fr); justify-content: stretch; gap: 4px; }
@@ -226,7 +244,7 @@ html:has(#op-dialog[open]) body { overflow-x: clip; }
   .op-more { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .op-card, .op-card::before, .op-stage canvas, .op-prog i, .op-more, .dlg-x { transition: none; }
+  .op-card, .op-card::before, .op-stage canvas, .op-prog i, .op-more, .dlg-x, .ops-dots i { transition: none; }
 }
 
 /* Exact text: show "<=" and "->" as typed, not as font ligatures. */

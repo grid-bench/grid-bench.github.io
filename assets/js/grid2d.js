@@ -1,13 +1,12 @@
 // Canvas renderer for 2D worlds (and 4D worlds laid out as a grid of 2D slices).
 // It draws exported reference states and animates color changes between them.
 
-import { cellPalette, coordOf, fitCanvas, mix, roundRect, theme } from "./util.js";
+import { cellPalette, coordOf, fitCanvas, mix, roundRect } from "./util.js";
 
 export class GridCanvas {
-  constructor(canvas, { pad = 10, digits = false, hover = true, onHover = null } = {}) {
+  constructor(canvas, { pad = 10, onHover = null } = {}) {
     this.canvas = canvas;
     this.pad = pad;
-    this.digits = digits;
     this.vec = [];
     this.prev = [];
     this.changed = new Set();
@@ -16,7 +15,7 @@ export class GridCanvas {
     this.hoverIndex = -1;
     this.ro = new ResizeObserver(() => this.draw());
     this.ro.observe(canvas);
-    if (hover && onHover) {
+    if (onHover) {
       canvas.addEventListener("pointermove", (e) => {
         const i = this.hit(e);
         if (i !== this.hoverIndex) {
@@ -44,11 +43,6 @@ export class GridCanvas {
     this.draw();
   }
 
-  refreshPalette() {
-    if (this.values) this.palette = cellPalette(this.values);
-    this.draw();
-  }
-
   // Move to a new state; cells in `changed` get a fading outline.
   setState(vec, changed = null) {
     this.prev = this.vec.slice();
@@ -71,18 +65,13 @@ export class GridCanvas {
   // Map each flat index to a cell rectangle.
   #computeLayout(W, H) {
     const shape = this.shape;
-    let rows, cols, cellAt;
     if (shape.length === 2) {
-      [rows, cols] = shape;
-      const sliceGap = 0;
-      cellAt = (i) => {
-        const [r, c] = coordOf(i, shape);
-        return [r, c, sliceGap];
-      };
+      // Row-major [rows, cols]: index i sits at row floor(i / cols), column i % cols.
+      const [rows, cols] = shape;
       const size = Math.min((W - 2 * this.pad) / cols, (H - 2 * this.pad) / rows);
       const x0 = (W - size * cols) / 2;
       const y0 = (H - size * rows) / 2;
-      return { size, rect: (i) => { const [r, c] = cellAt(i); return [x0 + c * size, y0 + r * size]; }, rows, cols };
+      return { size, rect: (i) => [x0 + (i % cols) * size, y0 + Math.floor(i / cols) * size] };
     }
     if (shape.length === 4) {
       const [a, b, c, d] = shape;
@@ -123,12 +112,10 @@ export class GridCanvas {
     this.layout = this.#computeLayout(W, H);
     const { size, rect } = this.layout;
     if (!(size > 0)) return; // canvas not laid out yet
-    const dark = theme() === "dark";
     const t = Math.min(1, (performance.now() - this.t0) / 900);
     const colorT = Math.min(1, t / 0.35);
     const gap = Math.max(1, size * 0.1);
     const rad = Math.max(1, size * 0.18);
-    const ring = dark ? "#7fe6ff" : "#0a8fb3";
     for (let i = 0; i < this.vec.length; i++) {
       const [x, y] = rect(i);
       const from = this.palette(this.prev[i] ?? this.vec[i]);
@@ -137,18 +124,11 @@ export class GridCanvas {
       roundRect(ctx, x + gap / 2, y + gap / 2, size - gap, size - gap, rad);
       ctx.fillStyle = fill;
       ctx.fill();
-      if (this.digits && size >= 16 && this.vec[i] !== 0) {
-        ctx.fillStyle = "rgba(255,255,255,.92)";
-        ctx.font = `600 ${Math.round(size * 0.42)}px "JetBrains Mono", monospace`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(String(this.vec[i]), x + size / 2, y + size / 2 + 1);
-      }
     }
     if (t < 1 && this.changed.size) {
       const alpha = 1 - t;
       ctx.lineWidth = Math.max(1.2, size * 0.12);
-      ctx.strokeStyle = ring;
+      ctx.strokeStyle = "#7fe6ff";
       ctx.globalAlpha = alpha;
       for (const i of this.changed) {
         const [x, y] = rect(i);
@@ -160,7 +140,7 @@ export class GridCanvas {
     if (this.hoverIndex >= 0) {
       const [x, y] = rect(this.hoverIndex);
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = dark ? "#ffffff" : "#0b1426";
+      ctx.strokeStyle = "#ffffff";
       roundRect(ctx, x + gap / 2, y + gap / 2, size - gap, size - gap, rad);
       ctx.stroke();
     }
