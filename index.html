@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/why.css">
   <link rel="stylesheet" href="assets/css/ops.css">
   <link rel="stylesheet" href="assets/css/instance.css">
   <link rel="stylesheet" href="assets/css/scale.css">
@@ -45,10 +46,11 @@
       <span>Grid-Bench</span>
     </a>
     <nav class="nav-links" id="nav-links" aria-label="Sections">
+      <a href="#why">Why</a>
+      <a href="#leaderboard">Leaderboard</a>
       <a href="#operations">Operations</a>
       <a href="#instance">How it works</a>
-      <a href="#scale">Scale</a>
-      <a href="#results">Results</a>
+      <a href="#results">Findings</a>
       <a href="#play">Play</a>
       <a href="#use">Use &amp; cite</a>
     </nav>
@@ -62,20 +64,13 @@
     <section class="hero">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <a class="announce" href="#results">
-            <span class="live" aria-hidden="true"></span>
-            <span><b>6 LLMs · 1,488 instances.</b> See how they do</span>
-            <span class="announce-go" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </span>
-          </a>
           <h1>Grid-Bench</h1>
           <p class="subtitle">Can LLMs Predict How Discrete Worlds Change?</p>
           <p class="typed">Watch a world <span class="typed-verb" id="typed-verb">relabel</span><span class="caret" aria-hidden="true"></span></p>
           <p class="lead">A model reads a grid, one rule, and up to 64 events, then writes the final world. A simulator checks every cell.</p>
           <div class="hero-cta">
-            <a class="btn btn-primary" href="#operations">
-              Explore the operations
+            <a class="btn btn-primary" href="#why">
+              Why Grid-Bench
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
             </a>
             <div class="res" role="group" aria-label="Paper, code, and data: available at launch">
@@ -124,334 +119,499 @@
       <div class="wrap affil reveal" id="affiliations">
         <p class="affil-label">Author affiliations</p>
         <ul class="affil-logos">
-          <li><img src="assets/img/affil/usc.svg" alt="University of Southern California" style="--h:26px"></li>
-          <li><img src="assets/img/affil/mbzuai.svg" alt="MBZUAI" style="--h:26px"></li>
-          <li><img src="assets/img/affil/meta.svg" alt="Meta" style="--h:22px"></li>
-          <li><img src="assets/img/affil/notre-dame.svg" alt="University of Notre Dame" style="--h:28px"></li>
-          <li><img src="assets/img/affil/ucla.svg" alt="UCLA" style="--h:22px"></li>
-          <li><img src="assets/img/affil/asu.svg" alt="Arizona State University" style="--h:28px"></li>
+          <li><img src="assets/img/affil/usc.svg" alt="University of Southern California" style="--h:29px"></li>
+          <li><img src="assets/img/affil/mbzuai.svg" alt="MBZUAI" style="--h:32px"></li>
+          <li><img src="assets/img/affil/meta.svg" alt="Meta" style="--h:21px"></li>
+          <li><img src="assets/img/affil/notre-dame.svg" alt="University of Notre Dame" style="--h:30px"></li>
+          <li><img src="assets/img/affil/ucla.svg" alt="UCLA" style="--h:23px"></li>
+          <li><img src="assets/img/affil/asu.svg" alt="Arizona State University" style="--h:25px"></li>
         </ul>
         <a class="affil-more" href="#authors-block">19 authors <span aria-hidden="true">→</span></a>
       </div>
     </section>
 
-    <!-- ============ 01 Operations ============ -->
-    <section class="block" id="operations">
+    <!-- ============ 01 Why ============ -->
+    <section class="block" id="why">
       <div class="wrap">
         <header class="sec-head reveal">
           <span class="sec-num">01</span>
-          <h2>Eight ways a world <em>changes</em></h2>
-          <p>Each card replays a real benchmark trajectory as the reference simulator executes it. Select one for its rule and a worked example.</p>
+          <h2>One change <em>shapes the next</em></h2>
         </header>
-        <div class="ops" id="ops"></div>
+        <p class="why-intro reveal">Spatial instructions describe how to move objects, transform regions, or change their surroundings. Applied in sequence, <strong>each one acts on a world that earlier ones have already changed.</strong></p>
+        <div class="why-figure" id="why-figure" role="group" aria-label="Reference states W0 to W3 of a three-event history"></div>
+        <p class="why-caption reveal">A three-event history from the paper. The entity moves right, a <b>SET</b> places an obstacle in its column, and the next move, allowed two cells, stops after one. Values: 1 is the entity, 2 an obstacle, 0 empty.</p>
+        <div class="why-prose">
+          <div class="reveal">
+            <h3>The question</h3>
+            <p>Can a language model follow such a history and say exactly where everything ends up? In Grid-Bench it reads the starting grid, the rules, and the events as text, and writes the complete final grid in one response.</p>
+            <p>Eight operation families cover geometry, neighborhoods, connected regions, and movement, in 2D, 3D, and 4D. Histories run up to 64 events, which separates getting one operation right from keeping track of many.</p>
+          </div>
+          <div class="reveal">
+            <h3>The design</h3>
+            <p><b>Grids make space explicit.</b> Coordinates and adjacency are spelled out, so a reflection inside a box and the growth of a connected region share one representation and one answer format.</p>
+            <p><b>The answer is the whole world.</b> Every cell must be right, including the many that should not change. Exact match asks for complete recovery; cell-level checks show how far a wrong answer is off, and where.</p>
+            <p><b>The rules execute.</b> A simulator computes the exact final state for any history, so every prediction is checkable, and the same rules can supply training examples with exact targets.</p>
+          </div>
+        </div>
+        <p class="why-bridge reveal">Even with explicit rules, reliable prediction of spatial change is hard. Here is how six LLMs do.</p>
       </div>
-      <dialog class="op-dialog" id="op-dialog" aria-labelledby="dlg-title"></dialog>
     </section>
 
-    <!-- ============ 02 How it works ============ -->
-    <section class="block" id="instance">
+    <!-- ============ 02 Leaderboard ============ -->
+    <section class="block" id="leaderboard">
       <div class="wrap">
         <header class="sec-head reveal">
           <span class="sec-num">02</span>
-          <h2>One instance, <em>start to finish</em></h2>
-          <p>The model gets a world, a rule, and events as plain text, and answers with the complete final grid in one response.</p>
+          <h2>The <em>leaderboard</em></h2>
+          <p>Six LLMs, the same prompts, one answer each and no tools. A grid counts only if every cell is right.</p>
         </header>
-
-        <div class="card task-shell reveal" id="task-explorer">
-          <div class="task-text">
-            <div class="pane-head"><span class="dots"><i></i><i></i><i></i></span><span>What the model reads</span></div>
-            <pre class="prompt" id="task-prompt" tabindex="0" aria-label="Formal prompt text"></pre>
-          </div>
-          <div class="task-visual">
-            <div class="task-toolbar">
-              <div class="seg" role="tablist" aria-label="Example world">
-                <button type="button" role="tab" aria-selected="true" data-example="0">2D · 4×4</button>
-                <button type="button" role="tab" aria-selected="false" data-example="1">3D · 3×3×3</button>
-              </div>
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-sm" type="button" id="task-prev" aria-label="Previous state">←</button>
-                <button class="btn btn-sm" type="button" id="task-play">Play</button>
-                <button class="btn btn-sm" type="button" id="task-next" aria-label="Next state">→</button>
-              </div>
-            </div>
-            <div class="timeline" id="task-timeline"></div>
-            <div class="stage" id="task-stage">
-              <div class="stage-badge" id="task-badge"></div>
-            </div>
-            <div class="stage-note" id="task-note"></div>
-            <div class="answer-row">
-              <pre class="answer" id="task-answer" aria-label="Reference final answer"></pre>
-              <label class="toggle"><input type="checkbox" id="task-error"> Show an illustrative error</label>
+        <div class="card rcard lboard reveal" id="board">
+          <div class="lb-top">
+            <h3 class="lb-title"><span id="board-scope">exact match, main view</span></h3>
+            <div class="seg lb-seg" id="board-view" role="group" aria-label="Leaderboard view">
+              <button type="button" aria-pressed="true" data-view="overall">Overall</button>
+              <button type="button" aria-pressed="false" data-view="task"><span class="by">By </span>operation</button>
+              <button type="button" aria-pressed="false" data-view="dimension"><span class="by">By </span>dimension</button>
+              <button type="button" aria-pressed="false" data-view="workload"><span class="by">By </span>workload</button>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ 03 Scale ============ -->
-    <section class="block" id="scale">
-      <div class="wrap">
-        <header class="sec-head reveal">
-          <span class="sec-num">03</span>
-          <h2>Same budget, <em>three geometries</em></h2>
-          <p>Worlds hold about 256 cells in 2D, 3D, and 4D, and every trajectory is cut at six history lengths.</p>
-        </header>
-        <div class="dims">
-          <div class="card dim reveal">
-            <div class="dim-top"><b>2D</b><span>16 × 16 = 256 cells</span></div>
-            <div class="dim-viz"><canvas id="dim-2d" aria-label="2D benchmark world" role="img"></canvas></div>
-            <p>Each cell has up to 4 axis neighbors.</p>
-          </div>
-          <div class="card dim reveal">
-            <div class="dim-top"><b>3D</b><span>6 × 6 × 7 = 252 cells</span></div>
-            <div class="dim-viz"><canvas id="dim-3d" aria-label="3D benchmark world" role="img"></canvas></div>
-            <p>Up to 6 neighbors; most cells sit near a boundary.</p>
-          </div>
-          <div class="card dim reveal">
-            <div class="dim-top"><b>4D</b><span>4 × 4 × 4 × 4 = 256 cells</span></div>
-            <div class="dim-viz"><canvas id="dim-4d" aria-label="4D benchmark world shown as 16 slices" role="img"></canvas></div>
-            <p>Up to 8 neighbors, shown as a 4 × 4 array of 2D slices.</p>
-          </div>
-        </div>
-
-        <div class="card prefix-card reveal">
-          <div>
-            <h3>Six prefixes, one trajectory</h3>
-            <p>Each generated trajectory is cut at T&nbsp;=&nbsp;0, 1, 8, 16, 32, and 64. Every prefix is a separate request with its own reference final state.</p>
-          </div>
-          <svg class="prefix-svg" id="prefix-svg" viewBox="0 0 640 172" role="img" aria-label="A 64-event trajectory with six prefix cut points at T=0, 1, 8, 16, 32, and 64"></svg>
-        </div>
-
-        <div class="card matrix-card reveal">
-          <div>
-            <div class="matrix-scroll"><div class="matrix" id="matrix" aria-label="Main design: three dimensions by eight operation families, each with eight trajectories and six prefixes"></div></div>
-          </div>
-          <div class="equation">
-            <div class="eq-row"><b>8</b> families × <b>3</b> dimensions × <b>8</b> trajectories × <b>6</b> prefixes</div>
-            <div class="eq-row">= <b>1,152</b> main instances from <b>192</b> trajectories</div>
-            <div class="eq-row">+ <b>336</b> instances from <b>56</b> trajectories in 7 additional 2D workload conditions</div>
-            <div class="eq-total">
-              <div class="big">1,488 <span style="font-size:18px;color:var(--text-2);font-weight:500">instances · 248 trajectories</span></div>
-              <div class="eq-row" style="margin-top:8px">× <b>6</b> models = <b>8,928</b> scored outcomes</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ 04 Results ============ -->
-    <section class="block" id="results">
-      <div class="wrap">
-        <header class="sec-head reveal">
-          <span class="sec-num">04</span>
-          <h2>How six LLMs <em>hold up</em></h2>
-          <p>Same prompts, one answer each, no tools. Exact recovery falls quickly as histories grow longer.</p>
-        </header>
-
-        <div class="card leader reveal">
-          <div class="table-scroll">
-            <table class="board-table" id="leaderboard">
-              <caption class="sr-only">Exact match by history length on the main view</caption>
+          <div id="board-overall">
+            <table class="lb" id="lb-table">
+              <caption class="sr-only">Exact match by history length on the main view, six models in the study's fixed order</caption>
             </table>
           </div>
-        </div>
-        <p class="caption leader-foot reveal">Correct complete states out of 192 main instances per history length (one per trajectory); the last column pools the 768 instances at T&nbsp;=&nbsp;8–64. Models are listed in the study's fixed order. Bars show exact match within each column.</p>
-
-        <article class="card finding reveal" id="finding-1">
-          <div class="finding-head">
-            <div class="finding-num">1</div>
-            <div>
-              <h3>Similar single-event performance can lead to different long-history profiles.</h3>
-              <p>Kimi K2.5 and MiniMax M2.5 solve more one-event instances than Claude 5 Sonnet (148 and 150 versus 137 of 192), yet by T&nbsp;=&nbsp;8 Claude 5 Sonnet leads them 91 to 33 and 31.</p>
-            </div>
-          </div>
-          <div class="chart-tools">
-            <div class="left">
-              <div class="seg" id="len-view" aria-label="Breakdown">
-                <button type="button" aria-pressed="true" data-view="overall">Overall</button>
-                <button type="button" aria-pressed="false" data-view="dimension">By dimension</button>
-                <button type="button" aria-pressed="false" data-view="task">By operation</button>
-              </div>
-              <div class="seg" id="len-sub" aria-label="Subset" hidden></div>
-            </div>
-            <button class="btn btn-sm btn-ghost" type="button" data-table-toggle="len-table">Show table</button>
-          </div>
-          <div class="legend" id="len-legend" style="margin-bottom:10px"></div>
-          <div class="chart-box" id="len-chart"></div>
-          <div class="view-table" id="len-table"></div>
-          <p class="caption" id="len-caption" style="margin-top:10px"></p>
-        </article>
-
-        <article class="card finding reveal" id="finding-2">
-          <div class="finding-head">
-            <div class="finding-num">2</div>
-            <div>
-              <h3>Similar exact-match scores can conceal different spatial errors.</h3>
-              <p>A final state can be wrong in a few cells or across much of the grid. On the same failed instances, models with near-identical exact match can differ several-fold in how many cells they get wrong.</p>
-            </div>
-          </div>
-          <div class="chart-row even">
-            <div class="chart-box">
-              <h4>Median wrong cells <span>· valid incorrect predictions, main view</span></h4>
-              <div id="extent-chart"></div>
-            </div>
-            <div class="chart-box">
-              <h4>Shared instances at T = 8 <span>· Kimi K2.5 33/192 vs. MiniMax M2.5 31/192 EM</span></h4>
-              <div id="pair-chart"></div>
-            </div>
-          </div>
-          <p class="caption" style="margin-top:12px"><strong>Left:</strong> median wrong-cell count among valid incorrect answers at T&nbsp;=&nbsp;1, 16, and 64; n beside each model counts those answers. <strong>Right:</strong> the 84 main instances where both Kimi K2.5 and MiniMax M2.5 return valid incorrect states at T&nbsp;=&nbsp;8, on log scales. Medians 14 versus 67; Kimi K2.5 has fewer wrong cells on 68, equal on 3, and more on 13. These outcome-selected comparisons complement exact match on the full set.</p>
-        </article>
-
-        <article class="card finding reveal" id="finding-3">
-          <div class="finding-head">
-            <div class="finding-num">3</div>
-            <div>
-              <h3>An incorrect final state can still recover substantial spatial change.</h3>
-              <p>At T&nbsp;=&nbsp;64 almost every answer is wrong, but some models still place far more correct values than copying the initial world would.</p>
-            </div>
-          </div>
-          <div class="chart-row">
-            <div class="chart-box">
-              <h4>Cell accuracy at T = 64 <span>· each model's valid-answer subset</span></h4>
-              <div class="legend" id="base-legend" style="margin-bottom:8px"></div>
-              <div id="base-chart"></div>
-            </div>
-            <div class="chart-box">
-              <h4>Where errors fall at T = 1 <span>· valid incorrect answers</span></h4>
-              <div class="legend" id="cu-legend" style="margin-bottom:8px"></div>
-              <div id="cu-chart"></div>
-            </div>
-          </div>
-          <p class="caption" style="margin-top:12px"><strong>Left:</strong> mean cell accuracy of each model's valid T&nbsp;=&nbsp;64 answers (n of 192 shown), with copy-initial and all-zero baselines computed on the same subset. Neither baseline solves any of the 960 positive-length main instances. <strong>Right:</strong> wrong cells only among changed cells (C), only among preserved cells (U), or both. At T&nbsp;=&nbsp;64 most failures combine both kinds.</p>
-        </article>
-
-        <article class="card finding reveal" id="explorer">
-          <div class="finding-head">
-            <div class="finding-num" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-            </div>
-            <div>
-              <h3>Results explorer</h3>
-              <p>Correct counts by operation, dimension, and workload. Condition profiles differ across models; these breakdowns describe the sampled conditions rather than intrinsic rule difficulty.</p>
-            </div>
-          </div>
-          <div class="chart-tools">
-            <div class="left">
-              <div class="seg" id="heat-view">
-                <button type="button" aria-pressed="true" data-view="task">Operation</button>
-                <button type="button" aria-pressed="false" data-view="dimension">Dimension</button>
-                <button type="button" aria-pressed="false" data-view="workload">Workload</button>
-              </div>
-              <div class="seg" id="heat-len">
+          <div id="board-heat" hidden>
+            <div class="heat-tools">
+              <div class="seg seg-sm" id="heat-len" role="group" aria-label="History length">
                 <button type="button" aria-pressed="true" data-len="pooled">T = 8–64</button>
                 <button type="button" aria-pressed="false" data-len="1">T = 1</button>
                 <button type="button" aria-pressed="false" data-len="16">T = 16</button>
                 <button type="button" aria-pressed="false" data-len="64">T = 64</button>
               </div>
+              <div class="ramp" id="heat-ramp" aria-hidden="true"></div>
             </div>
-            <div class="ramp" id="heat-ramp"></div>
+            <div class="legend heat-key" id="heat-key" aria-hidden="true"></div>
+            <div class="table-scroll"><table class="heat" id="heat"></table></div>
           </div>
-          <div class="table-scroll"><table class="heat" id="heat"></table></div>
-          <p class="caption" id="heat-caption" style="margin-top:10px"></p>
-        </article>
+          <p class="caption cap" id="board-cap">Correct complete states out of 192 main instances per length; the pooled column counts 768 instances at T&nbsp;=&nbsp;8–64.</p>
+        </div>
+        <a class="lb-more reveal" href="#results">What exact match does not show <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
 
-        <div class="notes">
-          <div class="card note reveal">
-            <h4>No prefix imputation</h4>
-            <p id="note-prefix">Aggregate decline is not a per-trajectory threshold: a later prefix is sometimes solved after an earlier one fails, so each length is requested and scored independently.</p>
+    <!-- ============ 03 Operations ============ -->
+    <section class="block" id="operations">
+      <div class="wrap">
+        <header class="sec-head reveal">
+          <span class="sec-num">03</span>
+          <h2>Eight ways a world <em>changes</em></h2>
+          <p>Each card replays a real benchmark trajectory as the reference simulator executes it. Select one for its rule and a worked example.</p>
+        </header>
+        <div class="ops-bar reveal">
+          <div class="seg ops-dim" id="ops-dim" role="group" aria-label="World dimension">
+            <button type="button" data-dim="2" aria-pressed="true">2D <span class="ops-dim-shape">16×16</span></button>
+            <button type="button" data-dim="3" aria-pressed="false">3D <span class="ops-dim-shape">6×6×7</span></button>
           </div>
-          <div class="card note reveal">
-            <h4>Delivery is part of the score</h4>
-            <p id="note-delivery">Empty outcomes and length terminations remain in exact match. Their counts are recorded per model as distinct properties.</p>
+          <p class="ops-hint">Changed cells flash after each event. <button class="info" id="ops-info" type="button" aria-label="About these animations">i</button></p>
+          <button class="btn btn-sm btn-ghost ops-pause" id="ops-pause" type="button" aria-label="Pause the animations">
+            <svg class="ops-pause-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>
+            <span class="ops-pause-label">Pause</span>
+          </button>
+        </div>
+        <div class="ops" id="ops" data-dim="2"></div>
+      </div>
+      <dialog class="op-dialog" id="op-dialog" aria-labelledby="dlg-title"></dialog>
+    </section>
+
+    <!-- ============ 04 How it works ============ -->
+    <section class="block" id="instance">
+      <div class="wrap">
+        <header class="sec-head reveal">
+          <span class="sec-num">04</span>
+          <h2>One instance, <em>start to finish</em></h2>
+          <p>The model gets a world, a rule, and events as plain text, and answers with the complete final grid in one response.</p>
+        </header>
+
+        <div class="ix-story reveal" id="ix-story">
+          <div class="ix-stage-col">
+            <div class="card ix-stage" id="ix-stage">
+              <div class="ix-stage-top">
+                <div class="seg" role="group" aria-label="Example world">
+                  <button type="button" aria-pressed="true" data-example="0">2D<span class="ix-shp"> · 4×4</span></button>
+                  <button type="button" aria-pressed="false" data-example="1">3D<span class="ix-shp"> · 3×3×3</span></button>
+                </div>
+                <span class="label-tag" id="ix-state">W0 · initial</span>
+              </div>
+              <div class="ix-view">
+                <div class="ix-pane is-on" id="ix-world"></div>
+                <div class="ix-pane ix-demo" id="ix-demo" aria-hidden="true"></div>
+              </div>
+              <p class="ix-caption" id="ix-caption"></p>
+              <p class="ix-src">The paper's Figure 1 example, not a benchmark instance.</p>
+            </div>
           </div>
-          <div class="card note reveal">
-            <h4>Verified references</h4>
-            <p id="note-oracle">An independent rule implementation replays selected states in both cohorts with zero mismatches.</p>
+
+          <ol class="ix-steps" id="ix-steps">
+            <li class="ix-step is-active" data-step="0">
+              <span class="ix-dot" aria-hidden="true">1</span>
+              <h3>A bounded world</h3>
+              <p>The model starts from W0, here the <span data-ix="shape">4×4</span> world from the paper's Figure 1, where <span class="ix-v v1">1</span> is an entity, <span class="ix-v v2">2</span> an obstacle, and <span class="ix-v v0">0</span> empty. Coordinates start at zero and do not wrap; benchmark worlds are 16×16, 6×6×7, or 4×4×4×4.</p>
+            </li>
+            <li class="ix-step" data-step="1">
+              <span class="ix-dot" aria-hidden="true">2</span>
+              <h3>One rule</h3>
+              <p>Every instance uses one operation family. This one is MOVE: <em>move selected values along an axis around obstructions.</em></p>
+              <details class="disclosure ix-rule">
+                <summary>Exact rule text from the prompt</summary>
+                <pre class="rule-text" id="ix-rule"></pre>
+              </details>
+            </li>
+            <li class="ix-step" data-step="2">
+              <span class="ix-dot" aria-hidden="true">3</span>
+              <h3>Events, in order</h3>
+              <p>Benchmark histories hold 0, 1, 8, 16, 32, or 64 events; this example has <span data-ix="nev">3</span>. Each event sees the world the previous one left.</p>
+              <ol class="ix-events" id="ix-events"></ol>
+            </li>
+            <li class="ix-step" data-step="3">
+              <span class="ix-dot" aria-hidden="true">4</span>
+              <h3>One complete answer</h3>
+              <p>The model lists every nonzero cell once, in coordinate order. Only this final grid is scored.</p>
+              <figure class="ix-answer-fig">
+                <figcaption><span class="ix-ref-dot" aria-hidden="true"></span>Reference answer, built from the simulator's <span data-ix="last">W3</span></figcaption>
+                <pre class="ix-answer" id="ix-answer" aria-label="Reference answer JSON"></pre>
+              </figure>
+            </li>
+            <li class="ix-step" data-step="4">
+              <span class="ix-dot" aria-hidden="true">5</span>
+              <h3>Checked cell by cell</h3>
+              <p>The simulator's <span data-ix="last">W3</span> is the reference, compared at every coordinate. One wrong cell sets exact match to 0.</p>
+              <div class="ix-try">
+                <label class="toggle"><input type="checkbox" id="ix-error"> Show an illustrative error</label>
+                <span class="ix-note">Hand-specified, as in the paper's Figure 1, not a model output.</span>
+              </div>
+              <dl class="ix-metrics" id="ix-metrics"></dl>
+            </li>
+          </ol>
+        </div>
+
+        <details class="disclosure ix-full reveal">
+          <summary>See the full prompt the model reads <span class="ix-ver" id="ix-ver"></span></summary>
+          <pre class="code ix-prompt" id="ix-prompt" tabindex="0" aria-label="Full prompt text"><button class="copy" type="button">Copy</button></pre>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ 05 Scale ============ -->
+    <section class="block" id="scale">
+      <div class="wrap">
+        <header class="sec-head reveal">
+          <span class="sec-num">05</span>
+          <h2>Same budget, <em>three geometries</em></h2>
+          <p>Worlds hold about 256 cells in 2D, 3D, and 4D, and every trajectory is cut at six history lengths.</p>
+        </header>
+        <div class="sc-dims" id="dims">
+          <article class="card sc-dim reveal" data-dim="2" aria-labelledby="dim-2d-h">
+            <div class="sc-dim-head">
+              <div>
+                <h3 class="sc-dim-d" id="dim-2d-h">2D</h3>
+                <p class="sc-dim-shape">16 × 16<span>256 cells</span></p>
+              </div>
+              <figure class="sc-nb" data-nb="2"><figcaption>4 neighbors</figcaption></figure>
+            </div>
+            <div class="sc-dim-viz"><canvas id="dim-2d" role="img" aria-label="A 16 by 16 benchmark world replaying RELABEL events"></canvas></div>
+            <p class="sc-tick" id="dim-2d-tick" aria-hidden="true"></p>
+            <p class="sc-dim-note"><b data-boundary="16,16">60</b> of 256 cells touch the boundary.</p>
+          </article>
+          <article class="card sc-dim reveal" data-dim="3" aria-labelledby="dim-3d-h">
+            <div class="sc-dim-head">
+              <div>
+                <h3 class="sc-dim-d" id="dim-3d-h">3D</h3>
+                <p class="sc-dim-shape">6 × 6 × 7<span>252 cells</span></p>
+              </div>
+              <figure class="sc-nb" data-nb="3"><figcaption>6 neighbors</figcaption></figure>
+            </div>
+            <div class="sc-dim-viz"><canvas id="dim-3d" role="img" aria-label="A 6 by 6 by 7 benchmark world replaying RELABEL events; drag to rotate"></canvas></div>
+            <p class="sc-tick" id="dim-3d-tick" aria-hidden="true"></p>
+            <p class="sc-dim-note"><b data-boundary="6,6,7">172</b> of 252 cells touch the boundary.</p>
+          </article>
+          <article class="card sc-dim reveal" data-dim="4" aria-labelledby="dim-4d-h">
+            <div class="sc-dim-head">
+              <div>
+                <h3 class="sc-dim-d" id="dim-4d-h">4D</h3>
+                <p class="sc-dim-shape">4 × 4 × 4 × 4<span>256 cells in 16 slices</span></p>
+              </div>
+              <figure class="sc-nb" data-nb="4"><figcaption>8 neighbors</figcaption></figure>
+            </div>
+            <div class="sc-dim-viz"><canvas id="dim-4d" role="img" aria-label="A 4 by 4 by 4 by 4 benchmark world drawn as 16 slices, replaying RELABEL events"></canvas></div>
+            <p class="sc-tick" id="dim-4d-tick" aria-hidden="true"></p>
+            <p class="sc-dim-note"><b data-boundary="4,4,4,4">240</b> of 256 cells touch the boundary.</p>
+          </article>
+        </div>
+        <div class="sc-dims-foot reveal">
+          <p class="caption">Each card replays the opening events of a RELABEL trajectory from the main benchmark, with states from the reference simulator.</p>
+          <button class="btn btn-sm btn-ghost sc-play" id="dims-play" type="button" aria-controls="dims">Pause</button>
+        </div>
+
+        <div class="card sc-prefix reveal">
+          <div class="sc-prefix-copy">
+            <h3 class="sc-h3">Six prefixes, one trajectory</h3>
+            <p>Every trajectory has 64 events and is cut at six lengths. Each cut is a separate request, scored against its own reference final state.<button class="info" type="button" id="prefix-info" aria-label="Statistics note" aria-describedby="prefix-note">i</button></p>
+            <span class="sr-only" id="prefix-note">The six prefixes of a trajectory share one history, so they are not independent rows. Confidence intervals therefore resample whole trajectories, not rows, keeping each trajectory's prefixes together.</span>
           </div>
+          <div class="sc-pf" id="prefix" role="list" aria-label="One 64-event trajectory cut at T = 0, 1, 8, 16, 32, and 64"></div>
+        </div>
+
+        <div class="card sc-fx reveal" id="formula">
+          <h3 class="sc-h3">How the numbers add up</h3>
+          <div class="sc-eq">
+            <div class="sc-grp sc-grp-all">
+              <div class="sc-grp-row">
+                <span class="sc-paren"><span class="sr-only">(</span><svg viewBox="0 0 13 64" preserveAspectRatio="none" aria-hidden="true"><path d="M11 1 Q1.5 32 11 63"/></svg></span>
+                <div class="sc-grp sc-grp-main">
+                  <div class="sc-grp-row">
+                    <span class="sc-term"><span class="sc-g" data-glyph="ops"></span><b class="sc-n" data-k="ops">8</b><span class="sc-l">operations</span></span>
+                    <span class="sc-pair"><span class="sc-op">×</span><span class="sc-term"><span class="sc-g" data-glyph="dims"></span><b class="sc-n" data-k="dims">3</b><span class="sc-l">geometries</span></span></span>
+                    <span class="sc-pair"><span class="sc-op">×</span><span class="sc-term"><span class="sc-g" data-glyph="traj"></span><b class="sc-n" data-k="traj">8</b><span class="sc-l">trajectories each</span></span></span>
+                    <span class="sc-pair"><span class="sc-op">×</span><span class="sc-term"><span class="sc-g" data-glyph="lens"></span><b class="sc-n" data-k="lens">6</b><span class="sc-l">history lengths</span></span></span>
+                  </div>
+                  <div class="sc-brace" style="--bd:.5s"><p><b class="sc-bn" data-k="main">1,152</b> main instances from <span data-k="mainTraj">192</span> trajectories</p></div>
+                </div>
+                <span class="sc-pair"><span class="sc-op">+</span><span class="sc-term"><span class="sc-g" data-glyph="work"></span><b class="sc-n" data-k="work">336</b><span class="sc-l">workload instances<button class="info" type="button" id="work-info" aria-label="About the workload instances" aria-describedby="work-note">i</button></span><span class="sc-l2"><span data-k="conditions">7</span> extra 2D conditions, <span data-k="workTraj">56</span> trajectories</span></span></span>
+                <span class="sc-paren"><span class="sr-only">)</span><svg viewBox="0 0 13 64" preserveAspectRatio="none" aria-hidden="true"><path d="M2 1 Q11.5 32 2 63"/></svg></span>
+              </div>
+              <div class="sc-brace" style="--bd:.85s"><p><b class="sc-bn" data-k="total">1,488</b> instances from <span data-k="totalTraj">248</span> trajectories</p></div>
+            </div>
+            <span class="sc-pair sc-tail">
+              <span class="sc-op">×</span><span class="sc-term"><span class="sc-g" data-glyph="models"></span><b class="sc-n" data-k="models">6</b><span class="sc-l">models</span></span>
+              <span class="sc-op">=</span><span class="sc-term sc-total"><span class="sc-g"></span><b class="sc-n" data-k="outcomes">8,928</b><span class="sc-l">scored outcomes</span></span>
+            </span>
+          </div>
+          <span class="sr-only" id="work-note">A 2D study that rescales PAINT, REFLECT, LAYER, and MIX adds 7 target sizes, each with 8 trajectories cut at 6 lengths: 336 instances from 56 trajectories.</span>
         </div>
       </div>
     </section>
 
-    <!-- ============ 05 Play ============ -->
+    <!-- ============ 06 Findings ============ -->
+    <section class="block" id="results">
+      <div class="wrap">
+        <header class="sec-head reveal">
+          <span class="sec-num">06</span>
+          <h2>Beyond the <em>leaderboard</em></h2>
+          <p>Exact match is only part of the picture. Three findings from the six-model study.</p>
+        </header>
+
+
+        <article class="card rcard finding reveal" id="finding-1">
+          <div class="f-text">
+            <span class="f-num" aria-hidden="true">1</span>
+            <h3>Close at one event, far apart by eight</h3>
+            <p class="f-lead">Kimi K2.5 and MiniMax M2.5 solve more one-event instances than Claude 5 Sonnet (<b data-fact="kimi-1">148</b> and <b data-fact="minimax-1">150</b> vs. <b data-fact="claude-1">137</b> of 192), yet at T&nbsp;=&nbsp;8 Claude 5 Sonnet leads <b data-fact="claude-8">91</b> to <b data-fact="kimi-8">33</b> and <b data-fact="minimax-8">31</b>.</p>
+          </div>
+          <div class="f-fig">
+            <div class="chart-tools">
+              <div class="seg" id="len-view" role="group" aria-label="Breakdown">
+                <button type="button" aria-pressed="true" data-view="overall">Overall</button>
+                <button type="button" aria-pressed="false" data-view="dimension">By dimension</button>
+                <button type="button" aria-pressed="false" data-view="task">By operation</button>
+              </div>
+              <button class="btn btn-sm btn-ghost" type="button" data-table-toggle="len-table" aria-expanded="false" aria-controls="len-table">Show table</button>
+            </div>
+            <div class="seg seg-sm seg-scroll" id="len-sub" role="group" aria-label="Subset" hidden></div>
+            <div class="legend" id="len-legend" role="group" aria-label="Show or hide models"></div>
+            <div class="chart-box" id="len-chart"></div>
+            <div class="view-table" id="len-table"></div>
+            <p class="caption cap" id="len-cap"></p>
+          </div>
+        </article>
+
+        <article class="card rcard finding reveal" id="finding-2">
+          <div class="f-text">
+            <span class="f-num" aria-hidden="true">2</span>
+            <h3>Similar scores, different errors</h3>
+            <p class="f-lead">Kimi K2.5 and MiniMax M2.5 are nearly tied at T&nbsp;=&nbsp;8 (<b data-fact="kimi-8">33</b> vs. <b data-fact="minimax-8">31</b> of 192), yet on the <b data-fact="pairs-n">84</b> instances where both return a valid wrong grid, their median wrong cells are <b data-fact="pairs-med-a">14</b> and <b data-fact="pairs-med-b">67</b>.</p>
+          </div>
+          <div class="f-fig">
+            <div class="chart-tools">
+              <div class="seg" id="f2-tabs" role="tablist" aria-label="Finding 2 charts">
+                <button type="button" role="tab" id="tab-extent" aria-selected="true" aria-controls="panel-extent">Error extent</button>
+                <button type="button" role="tab" id="tab-pairs" aria-selected="false" aria-controls="panel-pairs">Matched pairs</button>
+              </div>
+              <div class="legend" id="extent-legend" data-panel="panel-extent"></div>
+              <div class="legend" id="pair-legend" data-panel="panel-pairs" hidden></div>
+            </div>
+            <div class="tabpanel" id="panel-extent" role="tabpanel" aria-labelledby="tab-extent">
+              <div class="chart-box" id="extent-chart"></div>
+              <p class="caption cap" id="extent-cap"></p>
+            </div>
+            <div class="tabpanel" id="panel-pairs" role="tabpanel" aria-labelledby="tab-pairs" hidden>
+              <div class="chart-box" id="pair-chart"></div>
+              <p class="caption cap" id="pair-cap"></p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card rcard finding reveal" id="finding-3">
+          <div class="f-text">
+            <span class="f-num" aria-hidden="true">3</span>
+            <h3>Wrong grids can still capture real change</h3>
+            <p class="f-lead">At T&nbsp;=&nbsp;64, <b data-fact="wrong-64">1,111</b> of <span data-fact="all-64">1,152</span> answers are wrong, yet GPT-5.6 Sol's valid answers still get <b data-fact="sol-ca-64">81.6%</b> of cells right, against <b data-fact="sol-copy-64">51.0%</b> for copying the initial world.</p>
+          </div>
+          <div class="f-fig">
+            <div class="chart-tools">
+              <div class="seg" id="f3-tabs" role="tablist" aria-label="Finding 3 charts">
+                <button type="button" role="tab" id="tab-base" aria-selected="true" aria-controls="panel-base">Accuracy vs. baselines</button>
+                <button type="button" role="tab" id="tab-cu" aria-selected="false" aria-controls="panel-cu">Where errors fall</button>
+              </div>
+              <div class="legend" id="base-legend" data-panel="panel-base"></div>
+              <div class="legend cu-legend" id="cu-legend" data-panel="panel-cu" hidden></div>
+            </div>
+            <div class="tabpanel" id="panel-base" role="tabpanel" aria-labelledby="tab-base">
+              <div class="chart-box" id="base-chart"></div>
+              <p class="caption cap" id="base-cap"></p>
+            </div>
+            <div class="tabpanel" id="panel-cu" role="tabpanel" aria-labelledby="tab-cu" hidden>
+              <div class="chart-box" id="cu-chart"></div>
+              <p class="caption cap" id="cu-cap"></p>
+            </div>
+          </div>
+        </article>
+
+        <ul class="res-notes reveal" aria-label="Notes on the results">
+          <li><b>No prefix imputation.</b> <span id="note-prefix">A later prefix is sometimes solved after an earlier one fails, so each length is scored on its own.</span></li>
+          <li><b>Delivery counts.</b> <span id="note-delivery">Empty outcomes and length terminations score as wrong.</span></li>
+          <li><b>Verified references.</b> <span id="note-oracle">A second rule implementation replays selected states in both cohorts with zero mismatches.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 07 Play ============ -->
     <section class="block" id="play">
       <div class="wrap">
         <header class="sec-head reveal">
-          <span class="sec-num">05</span>
+          <span class="sec-num">07</span>
           <h2>Your <em>turn</em></h2>
           <p>Paint the final grid you expect, then check it against the reference cell by cell.</p>
         </header>
         <div class="card play reveal" id="play-app">
-          <div class="play-info">
-            <div class="play-pick" id="play-pick" aria-label="Choose a puzzle"></div>
-            <div>
-              <div class="pane-head" style="padding:0 0 8px;border:0">Rule</div>
-              <pre class="play-rule" id="play-rule"></pre>
-            </div>
-            <div>
-              <div class="pane-head" style="padding:0 0 8px;border:0">Events, in order</div>
-              <ol class="play-events" id="play-events"></ol>
-            </div>
+          <div class="play-bar">
+            <div class="play-pick" id="play-pick" role="group" aria-label="Choose a practice puzzle"></div>
+            <p class="play-progress" id="play-progress"></p>
           </div>
-          <div class="play-board">
-            <div class="board-head">
-              <span class="label-tag" id="board-mode">Your prediction</span>
-              <div class="palette" id="play-palette" aria-label="Value to paint"></div>
+          <div class="play-body">
+            <div class="play-info">
+              <div class="play-title">
+                <h3 id="play-op">MOVE</h3>
+                <p id="play-desc"></p>
+              </div>
+              <details class="disclosure" id="play-rule-box">
+                <summary>Exact rule</summary>
+                <pre class="rule-text" id="play-rule"></pre>
+              </details>
+              <div class="play-timeline">
+                <p class="tl-head"><span>Events, in order</span><span class="mono">p = [row, column]</span></p>
+                <ol class="play-events" id="play-events" aria-label="Start world and events, in order"></ol>
+              </div>
+              <p class="play-note">Practice worlds use the same simulator but are not benchmark instances.</p>
             </div>
-            <div class="board" id="play-board"></div>
-            <div class="verdict" id="play-verdict" aria-live="polite">Select a value, then click cells to edit the grid.</div>
-            <div class="board-actions">
-              <button class="btn btn-primary btn-sm" type="button" id="play-check">Check every cell</button>
-              <button class="btn btn-sm" type="button" id="play-reset">Reset to initial</button>
-              <button class="btn btn-sm btn-ghost" type="button" id="play-reveal">Replay the reference</button>
+            <div class="play-board">
+              <div class="board-head">
+                <span class="label-tag" id="board-mode">Your prediction</span>
+                <div class="palette" id="play-palette" role="group" aria-label="Value to paint"></div>
+              </div>
+              <div class="board-stage" id="play-stage">
+                <div class="board" id="play-board"></div>
+              </div>
+              <p class="sr-only" id="play-keys">Arrow keys move between cells. Enter or Space paints the selected value. A digit key paints that value.</p>
+              <p class="verdict" id="play-verdict" aria-live="polite"></p>
+              <div class="board-actions">
+                <button class="btn btn-primary btn-sm" type="button" id="play-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Check every cell</button>
+                <button class="btn btn-sm" type="button" id="play-reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg>Reset</button>
+                <button class="btn btn-sm btn-ghost" type="button" id="play-reveal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" id="play-reveal-icon"><path d="M8 5.5l10.5 6.5L8 18.5z"/></svg><span class="btn-label">Replay the reference</span></button>
+              </div>
             </div>
-            <div class="board-mini" id="play-mini"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ 06 Use & cite ============ -->
+    <!-- ============ 08 Use & cite ============ -->
     <section class="block" id="use">
       <div class="wrap">
-        <header class="sec-head reveal">
-          <span class="sec-num">06</span>
-          <h2>Use <em>Grid-Bench</em></h2>
-          <p>The simulator and scorer use only the Python standard library. Scoring saved answers needs no API key.</p>
-        </header>
-        <div class="start">
-          <div class="card reveal">
-            <h3>Quickstart</h3>
-            <p>Run a small example and score the reference answer against a copy-initial baseline.</p>
-<pre class="code"><button class="copy" type="button">Copy</button>git clone https://github.com/grid-bench/Grid-Bench.git
-cd Grid-Bench
-python -m pip install -e .
-python scripts/quickstart.py</pre>
-            <div class="links"><span class="btn btn-sm is-pending">GitHub <span class="soon">soon</span></span></div>
+        <div class="cta card reveal" id="use-cta">
+          <div class="cta-copy">
+            <header class="sec-head cta-head">
+              <span class="sec-num">08</span>
+              <h2>Test your model on <em>Grid-Bench</em></h2>
+              <p>The simulator and scorer use only the Python standard library, and scoring saved answers needs no API key.</p>
+            </header>
           </div>
-          <div class="card reveal">
-            <h3>Evaluate your model</h3>
-            <p>Send each instance's <span class="mono" style="font-size:13px">prompt</span> to your model, save one response per line, and score them.</p>
-<pre class="code"><button class="copy" type="button">Copy</button>grid-bench evaluate \
-  --data Grid-Bench-data \
-  --predictions answers.jsonl \
-  --out evaluation</pre>
-            <div class="links"><span class="btn btn-sm is-pending">Hugging Face <span class="soon">soon</span></span></div>
+
+          <div class="cta-code">
+            <div class="cta-tabs">
+              <div class="seg" role="tablist" aria-label="Getting started commands">
+                <button type="button" role="tab" id="use-tab-quick" aria-selected="true" aria-controls="use-panel-quick">Quickstart</button>
+                <button type="button" role="tab" id="use-tab-eval" aria-selected="false" aria-controls="use-panel-eval" tabindex="-1">Evaluate</button>
+                <button type="button" role="tab" id="use-tab-data" aria-selected="false" aria-controls="use-panel-data" tabindex="-1">Get the data</button>
+              </div>
+            </div>
+            <div class="cta-panels">
+              <div class="cta-panel is-active" role="tabpanel" id="use-panel-quick" aria-labelledby="use-tab-quick">
+<pre class="code" data-lang="shell"><button class="copy" type="button" aria-label="Copy quickstart commands">Copy</button><span class="code-lines"><span class="ln"><span class="k">git</span> clone https://github.com/<wbr><span class="nb">grid-bench/Grid-Bench.git</span>
+</span><span class="ln"><span class="k">cd</span> Grid-Bench
+</span><span class="ln"><span class="k">python</span> -m pip install -e .
+</span><span class="ln"><span class="k">python</span> scripts/quickstart.py</span></span></pre>
+                <p class="cta-note">Needs Python 3.11 or newer. Runs and scores a small example with no credentials or model calls.</p>
+              </div>
+              <div class="cta-panel" role="tabpanel" id="use-panel-eval" aria-labelledby="use-tab-eval">
+<pre class="code" data-lang="shell"><button class="copy" type="button" aria-label="Copy evaluate command">Copy</button><span class="code-lines"><span class="ln"><span class="k">grid-bench</span> evaluate \
+</span><span class="ln" style="--hang:4ch">  <span class="f">--data</span> /path/to/Grid-Bench-data \
+</span><span class="ln" style="--hang:4ch">  <span class="f">--predictions</span> answers.jsonl \
+</span><span class="ln" style="--hang:4ch">  <span class="f">--out</span> evaluation</span></span></pre>
+                <p class="cta-note">Write <code>answers.jsonl</code> with one JSON line per response: <span class="cta-eg"><code>{"public_id": "...", "response": "..."}</code> <button class="info" type="button" id="use-view-info" aria-label="About evaluation views" aria-describedby="use-view-note">i</button></span></p>
+                <p class="sr-only" id="use-view-note">The default main view scores 1,152 instances; --view all scores all 1,488. Missing answers stay in the denominator.</p>
+              </div>
+              <div class="cta-panel" role="tabpanel" id="use-panel-data" aria-labelledby="use-tab-data">
+<pre class="code" data-lang="python"><button class="copy" type="button" aria-label="Copy download code">Copy</button><span class="code-lines"><span class="ln"><span class="k">from</span> huggingface_hub <span class="k">import</span> snapshot_download
+</span><span class="ln">snapshot_download(
+</span><span class="ln" style="--hang:6ch">    repo_id=<span class="s">"xzx34/Grid-Bench"</span>,
+</span><span class="ln" style="--hang:6ch">    repo_type=<span class="s">"dataset"</span>,
+</span><span class="ln" style="--hang:6ch">    local_dir=<span class="s">"Grid-Bench-data"</span>,
+</span><span class="ln">)</span></span></pre>
+                <p class="cta-note">Works once the dataset is published; install <code>huggingface_hub</code> first. The download holds simulator references and recorded measurements, not model answers.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="cta-res" role="group" aria-label="Paper, code, and dataset: links added at launch">
+            <span class="res-pill" title="The paper link will be added after arXiv publication">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+              Paper <span class="soon">soon</span>
+            </span>
+            <span class="res-pill" title="github.com/grid-bench/Grid-Bench, available at public launch">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 7.5 4 12l4.5 4.5M15.5 7.5 20 12l-4.5 4.5"/></svg>
+              Code <span class="res-host">· GitHub</span> <span class="soon">soon</span>
+            </span>
+            <span class="res-pill" title="huggingface.co/datasets/xzx34/Grid-Bench, available at public launch">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6M4 11.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+              Dataset <span class="res-host">· Hugging Face</span> <span class="soon">soon</span>
+            </span>
+            <span class="res-note">Links go live at public launch.</span>
           </div>
         </div>
+
         <div class="cite">
-          <div class="card reveal">
-            <h3>BibTeX</h3>
-            <pre class="code" id="bibtex"><button class="copy" type="button">Copy</button></pre>
-          </div>
-          <div class="card reveal" id="authors-block">
+          <div class="card cite-card reveal" id="authors-block">
             <h3>Authors</h3>
-            <ol class="author-list" id="authors"></ol>
-            <ol class="affil-legend" id="affil-legend"></ol>
-            <dl class="meta-list">
+            <ul class="author-list" id="authors" aria-label="Authors with affiliation numbers"></ul>
+            <ol class="affil-legend" id="affil-legend" aria-label="Affiliations. Select one to highlight its authors."></ol>
+            <dl class="cite-meta">
               <div><dt>Release maintainer</dt><dd>Zixiang Xu · <a href="https://github.com/xzx34">@xzx34</a></dd></div>
-              <div><dt>Licenses</dt><dd>Code: MIT · Original benchmark data: CC BY 4.0</dd></div>
+              <div><dt>Licenses</dt><dd class="lic"><span class="li">Code MIT</span><span class="sr-only">, </span><span class="li">Original benchmark data CC BY 4.0</span></dd></div>
             </dl>
+          </div>
+          <div class="card cite-card reveal">
+            <h3>Cite</h3>
+            <pre class="code bib" id="bibtex"><button class="copy" type="button" aria-label="Copy BibTeX">Copy</button></pre>
           </div>
         </div>
       </div>

@@ -36,25 +36,32 @@ export function initBackdrop(canvas) {
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
     const offY = -((window.scrollY * 0.12) % SPACING);
-    const R = 170;
+    const R = 190;
     ripples = ripples.filter((r) => now - r.t0 < r.dur);
     for (let y = offY + SPACING / 2; y < H + SPACING; y += SPACING) {
       for (let x = SPACING / 2; x < W; x += SPACING) {
         let a = 0.11;
         let boost = 0;
         const md = Math.hypot(x - mouse.x, y - mouse.y);
-        if (md < R) boost = Math.max(boost, (1 - md / R) ** 1.6 * 0.75);
+        if (md < R) boost = Math.max(boost, (1 - md / R) ** 1.4 * 0.9);
         for (const r of ripples) {
           const p = (now - r.t0) / r.dur;
           const ring = p * r.reach;
           const d = Math.abs(Math.hypot(x - r.x, y - r.y) - ring);
           if (d < 22) boost = Math.max(boost, (1 - d / 22) * (1 - p) * 0.8);
         }
-        if (boost > 0.01) {
+        if (boost > 0.02) {
+          // Lit points grow into small cells, tinted along the page gradient.
           const [cr, cg, cb] = hueAt(x / W);
-          const s = 1.6 + boost * 2.2;
-          ctx.fillStyle = `rgba(${cr},${cg},${cb},${Math.min(0.95, a + boost)})`;
-          ctx.fillRect(x - s / 2, y - s / 2, s, s);
+          const s = 2 + boost * 9;
+          ctx.fillStyle = `rgba(${cr},${cg},${cb},${Math.min(0.85, 0.08 + boost * 0.6)})`;
+          if (ctx.roundRect) {
+            ctx.beginPath();
+            ctx.roundRect(x - s / 2, y - s / 2, s, s, Math.min(2.5, s / 3));
+            ctx.fill();
+          } else {
+            ctx.fillRect(x - s / 2, y - s / 2, s, s);
+          }
         } else {
           ctx.fillStyle = `rgba(150,170,210,${a})`;
           ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
@@ -90,7 +97,8 @@ export function initBackdrop(canvas) {
   }, { passive: true });
   document.addEventListener("pointerleave", () => { mouse = { x: -1e4, y: -1e4 }; });
   window.addEventListener("pointerdown", (e) => {
-    if (still || e.target.closest("button, a, input, canvas, svg, .card, dialog")) return;
+    // Only clicks on empty page background start a ripple, never clicks on content.
+    if (still || !e.target.matches("html, body, main, section, .wrap")) return;
     ripples.push({ x: e.clientX, y: e.clientY, t0: performance.now(), dur: 2200, reach: 260 });
   });
   window.addEventListener("scroll", () => { if (!running) draw(performance.now()); }, { passive: true });

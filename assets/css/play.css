@@ -1,47 +1,193 @@
-/* Section 05: reader puzzles. */
-.pane-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px;
-  border-bottom: 1px solid var(--line); font: 500 12px/1 var(--font-mono); color: var(--text-2); text-transform: uppercase; letter-spacing: .06em;
-}
-.play { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); overflow: hidden; }
-.play-info { padding: 20px 22px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.play-pick { display: flex; flex-wrap: wrap; gap: 6px; }
-.play-pick button {
-  border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 6px 10px; cursor: pointer;
-  font: 500 12.5px/1 var(--font-mono); color: var(--text-2);
-}
-.play-pick button small { font-family: var(--font-sans); color: var(--muted); margin-left: 6px; font-size: 11px; }
-.play-pick button[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
-.play-pick button.solved::after { content: "✓"; margin-left: 6px; color: var(--good); }
-.play-rule { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--code-bg); color: #c6d3e6; font: 400 12px/1.6 var(--font-mono); white-space: pre-wrap; border: 1px solid var(--line); max-height: 210px; overflow: auto; }
-.play-events { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; counter-reset: ev; }
-.play-events li {
-  counter-increment: ev; display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px;
-  background: var(--surface-2); border: 1px solid var(--line); font: 500 12.5px/1.3 var(--font-mono); color: var(--text);
-  transition: border-color .2s, background .2s;
-}
-.play-events li::before { content: counter(ev); width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; background: var(--surface-3); color: var(--muted); font-size: 11px; flex: none; }
-.play-events li.is-on { border-color: var(--accent); background: var(--accent-soft); }
-.play-board { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; align-items: stretch; min-width: 0; }
-.board-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.palette { display: flex; gap: 6px; flex-wrap: wrap; }
-.swatch {
-  width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--line-strong); cursor: pointer; display: grid; place-items: center;
-  font: 600 13px/1 var(--font-mono); transition: transform .15s, box-shadow .15s;
-}
-.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); transform: translateY(-1px); }
-.board { position: relative; align-self: center; width: min(100%, 400px); }
-.board svg { width: 100%; height: auto; touch-action: none; user-select: none; }
-.board-cell { cursor: pointer; }
-.board-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.verdict { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 10px; text-align: center; font-size: 14.5px; color: var(--text-2); }
-.verdict b { font-weight: 600; }
-.verdict .ok { color: var(--good); }
-.verdict .no { color: var(--bad); }
-.board-mini { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+/* Section 05: practice puzzles. The reader paints a final grid and checks it against the reference. */
 
-@media (max-width: 900px) {
-  .play { grid-template-columns: minmax(0, 1fr); }
-  .play-info { border-right: 0; border-bottom: 1px solid var(--line); }
+.play {
+  position: relative; isolation: isolate; overflow: hidden; border-radius: 26px;
+  /* --muted is about 4.1:1 on the card; small text here uses a lighter mix (about 5.4:1). */
+  --play-muted: color-mix(in srgb, var(--text-2) 40%, var(--muted));
 }
-@media (max-width: 640px) { .play-info, .play-board { padding: 16px; } }
+.play::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(560px 340px at 0% 0%, rgba(53, 208, 240, 0.075), transparent 70%),
+    radial-gradient(640px 440px at 100% 100%, rgba(139, 124, 246, 0.11), transparent 70%);
+}
+
+/* ---------- Puzzle picker and progress ---------- */
+.play-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px 24px; flex-wrap: wrap;
+  padding: 18px 24px; border-bottom: 1px solid var(--line);
+}
+.play-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.pz {
+  position: relative; display: inline-flex; align-items: center; gap: 9px; height: 40px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--surface-2) 85%, transparent);
+  transition: transform .2s, background .2s, border-color .2s, box-shadow .2s;
+}
+.pz:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent-2) 60%, transparent); }
+.pz-op { font: 600 14px/1 var(--font-display); letter-spacing: .03em; color: var(--text); }
+.pz-lvl { font-size: 12.5px; line-height: 1; color: var(--play-muted); }
+/* Solved check: a corner badge, so solving a puzzle never changes the pill's width. */
+.pz-ok {
+  position: absolute; top: -5px; right: -4px; width: 18px; height: 18px; border-radius: 50%;
+  display: grid; place-items: center; pointer-events: none;
+  background: var(--good); color: var(--bg); box-shadow: 0 0 0 2.5px var(--surface);
+  opacity: 0; transform: scale(.4); transition: opacity .25s, transform .35s cubic-bezier(.2, .9, .3, 1.4);
+}
+.pz-ok svg { width: 11px; height: 11px; stroke-width: 3; }
+.pz.is-solved .pz-ok { opacity: 1; transform: none; }
+.pz[aria-pressed="true"] { background: var(--text); border-color: transparent; box-shadow: 0 12px 30px -14px rgba(139, 124, 246, 0.75); }
+.pz[aria-pressed="true"] .pz-op { color: var(--bg); }
+.pz[aria-pressed="true"] .pz-lvl { color: #5a6578; }
+
+.play-progress { margin: 0; flex: none; display: inline-flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-2); white-space: nowrap; }
+.play-progress svg { width: 22px; height: 22px; transform: rotate(-90deg); flex: none; }
+.play-progress .trk { fill: none; stroke: var(--surface-3); stroke-width: 3; }
+.play-progress .val { fill: none; stroke: url(#play-ring); stroke-width: 3; stroke-linecap: round; }
+
+/* ---------- Body ---------- */
+.play-body { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+@media (min-width: 961px) { .play-body { min-height: 636px; } }
+
+.play-info { padding: 34px 34px 30px; display: flex; flex-direction: column; gap: 26px; min-width: 0; }
+.play-title h3 { margin: 0; font: 700 clamp(38px, 4.2vw, 52px)/1 var(--font-display); letter-spacing: -0.03em; color: var(--text); }
+.play-title p { margin: 12px 0 0; font-size: 17px; line-height: 1.5; color: var(--text-2); max-width: 24em; }
+.play-info details.disclosure > summary { padding: 11px 16px; }
+
+.tl-head {
+  margin: 0 0 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 6px 12px; flex-wrap: wrap;
+  font-size: 14px; color: var(--text-2);
+}
+.tl-head .mono { font-size: 12px; color: var(--play-muted); }
+.play-events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.pev {
+  display: inline-flex; align-items: center; gap: 11px; max-width: 100%; min-height: 40px; padding: 7px 16px 7px 8px;
+  border-radius: 20px; border: 1px solid var(--line); background: var(--surface-2);
+  transition: border-color .3s, background .3s, box-shadow .3s, opacity .3s;
+}
+.pev code { font: 500 13px/1.35 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+.pev-n {
+  flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-3); color: var(--text-2); font: 600 11.5px/1 var(--font-mono); transition: background .3s, color .3s;
+}
+.pev-start { border-radius: 16px; padding: 6px 16px 6px 6px; }
+.pev-mini { width: 42px; height: 42px; flex: none; }
+.pev-t { font-size: 13.5px; color: var(--text-2); }
+.pev-t b { color: var(--text); font-weight: 600; margin-right: 7px; }
+.pev.is-on {
+  border-color: transparent; background: linear-gradient(var(--surface-2), var(--surface-2)) padding-box, var(--grad) border-box;
+  box-shadow: 0 10px 28px -12px rgba(139, 124, 246, 0.8);
+}
+.pev.is-on .pev-n { background: var(--grad); color: #fff; }
+.pev.is-done { opacity: .5; }
+.play-note { margin: -6px 0 0; font-size: 13px; line-height: 1.5; color: var(--play-muted); }
+
+/* ---------- Board ---------- */
+.play-board {
+  padding: 26px 30px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-width: 0;
+  border-left: 1px solid var(--line); background: rgba(3, 5, 10, 0.22);
+}
+.play .board-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.play .palette { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.play .palette-label { font-size: 13px; color: var(--play-muted); margin-right: 4px; }
+.play .swatch {
+  --c: var(--text-2);
+  width: 40px; height: 40px; border-radius: 13px; border: 1px solid var(--line-strong); cursor: pointer; display: grid; place-items: center;
+  font: 600 14px/1 var(--font-mono); transition: transform .2s, box-shadow .2s;
+}
+.play .swatch:hover { transform: translateY(-2px); }
+.play .swatch[aria-pressed="true"] {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--c), 0 8px 26px -4px var(--c);
+}
+
+.play .board-stage {
+  position: relative; width: min(100%, calc(var(--cols, 5) * 76px + 46px)); padding: 16px 18px 8px 8px; border-radius: 24px;
+  border: 1px solid var(--line); background: var(--bg-soft); transition: box-shadow .6s ease;
+}
+.play .board-stage::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 2px; pointer-events: none;
+  background: var(--grad);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity .5s ease;
+}
+.play .board-stage.is-win::before { opacity: 1; }
+.play .board-stage.is-win { box-shadow: 0 0 70px -16px rgba(139, 124, 246, 0.7), 0 0 40px -18px rgba(53, 208, 240, 0.7); }
+
+/* manipulation: a swipe on the board scrolls the page; play.js paints touch and pen input on a tap only. */
+.play .board svg {
+  width: 100%; height: auto; overflow: visible; touch-action: manipulation;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+.play .board-cell { cursor: pointer; outline: none; transform-box: fill-box; transform-origin: center; }
+.play .board.is-ref .board-cell { cursor: default; }
+.play .cell-flash { opacity: 0; pointer-events: none; }
+.play .cell-ring { fill: none; stroke: var(--text-2); stroke-width: 2; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.play .board:not(.is-ref) .board-cell:hover .cell-ring { opacity: .55; }
+.play .board-cell:focus-visible .cell-ring { opacity: 1; stroke: var(--text); stroke-width: 2.5; }
+.play .board-cell.is-changed .cell-ring { opacity: 1; stroke: var(--accent); stroke-width: 3; }
+.play .board-cell.is-wrong .cell-ring { opacity: 1; stroke: var(--bad); stroke-width: 3.5; }
+
+.play .board.is-wave .board-cell { animation: pz-pop .7s cubic-bezier(.2, .8, .2, 1) var(--d, 0ms) both; }
+.play .board.is-wave .cell-flash { animation: pz-flash 1s ease var(--d, 0ms) both; }
+@keyframes pz-pop { 0%, 100% { transform: none; } 40% { transform: scale(1.08); } }
+@keyframes pz-flash { 0% { opacity: 0; } 30% { opacity: .9; } 100% { opacity: 0; } }
+
+.play .verdict {
+  margin: 0; min-height: 26px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 8px;
+  text-align: center; font-size: 15px; line-height: 1.45; color: var(--text-2); font-variant-numeric: tabular-nums; text-wrap: balance;
+}
+.play .verdict b { font-weight: 600; }
+.play .verdict .no { color: var(--bad); }
+.play .verdict .ok { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.play .v-ok { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--grad); color: #fff; flex: none; }
+.play .v-ok svg { width: 13px; height: 13px; }
+.play .board-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+/* ---------- Responsive ---------- */
+/* The bar keeps pills and progress on one row down to 781px; the 3x2 picker grid shrinks to fit. */
+@media (min-width: 781px) { .play-bar { flex-wrap: nowrap; } }
+@media (max-width: 1100px) and (min-width: 961px) {
+  .play-info { padding-inline: 28px; }
+  .play-board { padding-inline: 18px; }
+  .play .board-actions { gap: 8px; flex-wrap: nowrap; }
+  .play .board-actions .btn { padding: 0 12px; }
+}
+@media (max-width: 1220px) and (min-width: 641px) {
+  .play-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; flex: 0 1 600px; }
+  .pz { justify-content: center; padding: 0 12px; }
+}
+@media (max-width: 780px) and (min-width: 641px) {
+  .play-pick { flex-basis: 100%; }
+  .play-progress { width: 100%; justify-content: center; }
+}
+@media (max-width: 960px) {
+  .play-body { grid-template-columns: minmax(0, 1fr); }
+  .play-board { border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (max-width: 640px) {
+  .play { border-radius: 22px; }
+  .play-bar { padding: 14px; }
+  .play-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
+  .pz { justify-content: center; gap: 7px; padding: 0 10px; }
+  .pz-op { font-size: 13.5px; }
+  .pz-lvl { font-size: 12px; }
+  .play-progress { width: 100%; justify-content: center; }
+  .play-info { padding: 24px 18px 22px; gap: 22px; }
+  .play-board { padding: 20px 14px 22px; gap: 16px; }
+  .play .board-head { justify-content: center; }
+  .pev { padding-right: 12px; gap: 9px; }
+  .pev code { font-size: 12px; }
+  .play .board-stage { padding: 12px 12px 6px 4px; border-radius: 20px; }
+  .play .board-actions { width: 100%; }
+  .play .board-actions .btn { flex: 1 1 auto; justify-content: center; }
+}
+/* Narrow phones: the level sits under the op, so "COMPRESS Challenge" never overflows its pill. */
+@media (max-width: 400px) {
+  .pz { flex-direction: column; height: 52px; gap: 5px; padding: 0 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play .board .gcell, .pev, .pev-n, .pz, .pz-ok, .play .swatch, .play .cell-ring, .play .board-stage, .play .board-stage::before { transition: none; }
+  .pz:hover, .play .swatch:hover, .play .swatch[aria-pressed="true"] { transform: none; }
+}

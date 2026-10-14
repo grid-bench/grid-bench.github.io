@@ -72,6 +72,7 @@ function initCopy() {
     if (!btn) return;
     const pre = btn.parentElement;
     const text = [...pre.childNodes].filter((n) => n !== btn).map((n) => n.textContent).join("").trim();
+    btn.setAttribute("aria-live", "polite");
     try {
       await navigator.clipboard.writeText(text);
       btn.textContent = "Copied";
@@ -214,9 +215,10 @@ async function main() {
     ["hero", "examples", "families", "tesseract", "play", "results"].map(load),
   );
   guard("hero", () => initHero(hero));
-  const [{ initTask }, { initFamilies }, { initCoverage }, { initPlay }, { initCharts }, { initUse }] = await Promise.all([
-    import("./task.js"), import("./families.js"), import("./coverage.js"), import("./play.js"), import("./charts.js"), import("./use.js"),
+  const [{ initWhy }, { initTask }, { initFamilies }, { initCoverage }, { initPlay }, { initCharts }, { initUse }] = await Promise.all([
+    import("./why.js"), import("./task.js"), import("./families.js"), import("./coverage.js"), import("./play.js"), import("./charts.js"), import("./use.js"),
   ]);
+  guard("why", () => initWhy(examples));
   guard("operations", () => initFamilies(families, hero));
   guard("instance", () => initTask(examples));
   guard("scale", () => initCoverage({ families, hero, tesseract, results }));

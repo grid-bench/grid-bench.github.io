@@ -7,8 +7,12 @@ const GAP = 0.2; // fraction of a cell left empty around each cube
 const PITCH = 0.56; // camera elevation in radians
 
 export class VoxelWorld {
-  constructor(canvas, { autoRotate = 0.16, interactive = true, yaw = 0.7 } = {}) {
+  // `zoom` scales the fitted world (1 = fit with margins, the default).
+  // `glow: false` skips the radial halo behind changed cubes (cheaper for small canvases).
+  constructor(canvas, { autoRotate = 0.16, interactive = true, yaw = 0.7, zoom = 1, glow = true } = {}) {
     this.canvas = canvas;
+    this.zoom = zoom;
+    this.glow = glow;
     this.yaw = yaw;
     this.spin = autoRotate;
     this.vel = 0;
@@ -136,7 +140,7 @@ export class VoxelWorld {
     const cx = X / 2, cy = Y / 2, cz = Z / 2;
     // Fit the bounding box.
     const radius = Math.hypot(X, Y) / 2;
-    const scale = Math.min(W / (2 * radius + 1.2), H / (2 * radius * sp + Z * cp + 1.4));
+    const scale = this.zoom * Math.min(W / (2 * radius + 1.2), H / (2 * radius * sp + Z * cp + 1.4));
     const ox = W / 2;
     const oy = H / 2 + scale * 0.1;
     const proj = (x, y, z) => {
@@ -208,7 +212,7 @@ export class VoxelWorld {
         [[fx, y0, z0], [fx, y1, z0], [fx, y1, z1], [fx, y0, z1], faceX],
         [[x0, fy, z0], [x1, fy, z0], [x1, fy, z1], [x0, fy, z1], faceY],
       ];
-      if (pulse > 0 && dark) {
+      if (pulse > 0 && dark && this.glow) {
         const c = proj(mx, my, mz);
         const g = ctx.createRadialGradient(c[0], c[1], 0, c[0], c[1], scale * 1.3);
         g.addColorStop(0, `rgba(80,220,255,${0.32 * pulse})`);

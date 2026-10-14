@@ -122,6 +122,7 @@ export class GridCanvas {
     ctx.clearRect(0, 0, W, H);
     this.layout = this.#computeLayout(W, H);
     const { size, rect } = this.layout;
+    if (!(size > 0)) return; // canvas not laid out yet
     const dark = theme() === "dark";
     const t = Math.min(1, (performance.now() - this.t0) / 900);
     const colorT = Math.min(1, t / 0.35);
