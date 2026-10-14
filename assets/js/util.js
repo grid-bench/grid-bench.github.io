@@ -233,3 +233,28 @@ export function tipRow(color, label, value) {
 export function tipSub(text) {
   return el("div", { class: "tt-sub", text });
 }
+
+// Pointer-follow 3D tilt for cards and panels. `max` is the largest rotation in degrees.
+export function tilt(node, { max = 5, lift = 3 } = {}) {
+  if (reducedMotion() || !window.matchMedia("(hover: hover)").matches) return;
+  node.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse" || node.dataset.noTilt) return;
+    const r = node.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    node.style.transform = `perspective(1100px) rotateX(${(-y * max * 0.8).toFixed(2)}deg) rotateY(${(x * max).toFixed(2)}deg) translateY(-${lift}px)`;
+  });
+  node.addEventListener("pointerleave", () => { node.style.transform = ""; });
+}
+
+// Animate an integer from 0 to `target` (or show it at once under reduced motion).
+export function countUp(node, target, { dur = 1100, format = fmt.int } = {}) {
+  if (reducedMotion()) { node.textContent = format(target); return; }
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / dur);
+    node.textContent = format(Math.round(target * (1 - (1 - t) ** 3)));
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}

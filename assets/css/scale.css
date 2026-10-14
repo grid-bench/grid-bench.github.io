@@ -1,0 +1,36 @@
+/* Section 03: geometries, prefixes, and design size. */
+.prefix-card { margin-top: 18px; padding: 22px 22px 18px; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 28px; align-items: center; }
+.prefix-card h3 { margin: 0 0 8px; font: 600 20px/1.25 var(--font-display); }
+.prefix-card p { margin: 0; color: var(--text-2); font-size: 14.5px; }
+.prefix-svg { width: 100%; height: auto; }
+.dims { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.dim { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.dim-viz { aspect-ratio: 1.15; display: grid; place-items: center; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--line); overflow: hidden; }
+.dim-viz canvas { width: 100%; height: 100%; }
+.dim-top { display: flex; justify-content: space-between; align-items: baseline; }
+.dim-top b { font: 600 20px/1 var(--font-display); }
+.dim-top span { font: 500 12.5px/1 var(--font-mono); color: var(--text-2); }
+.dim p { margin: 0; font-size: 13.5px; color: var(--text-2); }
+.matrix-card { margin-top: 18px; padding: 22px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 40px; align-items: center; }
+.matrix-scroll { overflow-x: auto; padding-bottom: 2px; }
+.matrix { display: grid; grid-template-columns: 46px repeat(8, max-content); gap: 6px 6px; align-items: center; justify-content: start; }
+.matrix .mh { font: 500 11.5px/1 var(--font-mono); color: var(--muted); text-align: center; padding-bottom: 4px; }
+.matrix .mr { font: 600 12px/1 var(--font-mono); color: var(--text-2); }
+.mcell { display: grid; grid-template-columns: repeat(6, 5px); gap: 2px; padding: 6px; border-radius: 7px; background: var(--surface-2); border: 1px solid var(--line); transition: border-color .2s; }
+.mcell i { width: 5px; height: 5px; border-radius: 1.2px; background: color-mix(in srgb, var(--accent) 62%, transparent); }
+.mcell i.wk { background: color-mix(in srgb, var(--accent-2) 70%, transparent); }
+.mcell:hover { border-color: var(--accent); }
+.equation { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+.eq-row { font: 500 14px/1.6 var(--font-mono); color: var(--text-2); }
+.eq-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.eq-row b { color: var(--text); font-weight: 600; }
+.eq-total { padding-top: 14px; border-top: 1px solid var(--line); }
+.eq-total .big { font: 600 34px/1 var(--font-sans); color: var(--text); letter-spacing: -0.02em; }
+.legend-inline { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); }
+.legend-inline i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+@media (max-width: 900px) {
+  .prefix-card, .matrix-card { grid-template-columns: minmax(0, 1fr); }
+  .dims { grid-template-columns: 1fr; }
+  .dim-viz { aspect-ratio: 1.5; }
+}
