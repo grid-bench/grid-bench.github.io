@@ -1,9 +1,9 @@
 # Grid-Bench website
 
-Source for the project website planned at **https://grid-bench.github.io/**.
+Source for the project website at **https://grid-bench.github.io/**.
 
-This repository is private. GitHub Pages is disabled; keep it this way until the
-project owner authorizes public launch.
+The public site is deployed with GitHub Pages from the root of `site-v1`.
+This branch is the maintained website; changes pushed to it trigger deployment.
 
 ## Project
 
@@ -16,9 +16,9 @@ against an executable reference world.
 
 | Resource | Destination | Status on the site |
 | --- | --- | --- |
-| Website | https://grid-bench.github.io/ | Draft; not deployed |
-| Code | https://github.com/grid-bench/Grid-Bench | "soon" label until public |
-| Dataset | https://huggingface.co/datasets/xzx34/Grid-Bench | "soon" label until public |
+| Website | https://grid-bench.github.io/ | Published from `site-v1` |
+| Code | https://github.com/grid-bench/Grid-Bench | Live link |
+| Dataset | https://huggingface.co/datasets/xzx34/Grid-Bench | Live link |
 | Paper | Added after arXiv publication | "soon" label; no URL invented |
 
 ## Release scope
@@ -92,16 +92,15 @@ python3 -m http.server 8765
 # open http://127.0.0.1:8765/
 ```
 
-## Before launch
+## Maintenance
 
-1. Replace the three `.res-item` spans and the `.soon` label in the hero `.res`
-   group, and the three `.res-pill` spans in #use (`.cta-res`), with links to
-   their verified destinations; remove the "Links go live at public launch." note.
-2. Add the arXiv identifier to `BIB_LINES` in `assets/js/use.js`, replacing
-   `note = {Paper identifier forthcoming}`.
-3. Confirm the release revision matches `assets/data/manifest.json` source hashes.
-4. Regenerate `assets/img/og-image.png` if the hero changes.
-5. Enable GitHub Pages only with the project owner's authorization.
+- Keep code and dataset links in both resource groups aligned with their public
+  destinations. Leave the paper entry pending until arXiv publication.
+- When the paper is live, add its URL to both Paper entries and its identifier
+  to `BIB_LINES` in `assets/js/use.js`.
+- Confirm exported data match `assets/data/manifest.json` before deployment.
+- Regenerate `assets/img/og-image.png` if the hero changes.
+- Preview changes locally, then push `site-v1` to deploy through GitHub Pages.
 
 Release maintainer: Zixiang Xu (`xzx34`). Paper authorship and release ownership
 are separate metadata. Affiliation logos appear only as an evenly weighted, scrolling row of

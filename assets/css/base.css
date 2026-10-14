@@ -135,6 +135,9 @@ button { font: inherit; color: inherit; }
 }
 .res-item { display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; height: 34px; font-size: 14px; color: var(--text-2); cursor: default; }
 .res-item + .res-item { border-left: 1px solid var(--line); }
+.res-item[href] { cursor: pointer; text-decoration: none; }
+.res-item[href]:hover { color: var(--text); }
+.res-item[href]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .res-item svg { width: 16px; height: 16px; }
 .res .soon { margin-left: 4px; }
 

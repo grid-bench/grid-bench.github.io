@@ -59,6 +59,9 @@
   border-radius: 999px; border: 1px solid var(--line-strong); background: rgba(255, 255, 255, 0.025);
   font-size: 13.5px; color: var(--text-2); white-space: nowrap; cursor: default;
 }
+.res-pill[href] { cursor: pointer; text-decoration: none; }
+.res-pill[href]:hover { color: var(--text); border-color: var(--accent); }
+.res-pill[href]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .res-pill svg { width: 15px; height: 15px; flex: none; }
 .res-host { color: var(--muted-2); margin-left: -3px; }
 .res-pill .soon { margin-left: 3px; }
