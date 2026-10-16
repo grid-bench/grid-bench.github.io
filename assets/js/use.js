@@ -4,8 +4,8 @@ import { el, hideTip, reducedMotion, showTip, tilt, tipTitle } from "./util.js";
 
 // Order and numbering follow paper/authors.tex (the arXiv author block).
 const AFFILIATIONS = [
-  "University of Southern California", "MBZUAI", "Meta",
-  "University of Notre Dame", "UCLA", "Arizona State University",
+  "University of Southern California", "Mohamed bin Zayed University of Artificial Intelligence", "Meta",
+  "University of Notre Dame", "University of California, Los Angeles", "Arizona State University",
 ];
 
 const AUTHORS = [
@@ -24,10 +24,14 @@ const BIB_AUTHORS = AUTHORS.map(([name]) => {
 // Each field is its own block line so wrapped author names hang under the opening brace.
 const BIB_LINES = [
   ["@misc{xu2026gridbench,", 0],
-  ["  title  = {Grid-Bench: Can {LLMs} Predict How Discrete Worlds Change?},", 12],
+  ["  title = {Grid-Bench: Can {LLMs} Predict How Discrete Worlds Change?},", 12],
   [`  author = {${BIB_AUTHORS.join(" and ")}},`, 12],
-  ["  year   = {2026},", 12],
-  ["  note   = {Paper identifier forthcoming}", 12],
+  ["  year = {2026},", 12],
+  ["  eprint = {2610.22312},", 12],
+  ["  archivePrefix = {arXiv},", 12],
+  ["  primaryClass = {cs.CL},", 12],
+  ["  doi = {10.48550/arXiv.2610.22312},", 12],
+  ["  url = {https://arxiv.org/abs/2610.22312}", 12],
   ["}", 0],
 ];
 

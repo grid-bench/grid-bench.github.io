@@ -19,14 +19,14 @@ against an executable reference world.
 | Website | https://grid-bench.github.io/ | Published from `site-v1` |
 | Code | https://github.com/grid-bench/Grid-Bench | Live link |
 | Dataset | https://huggingface.co/datasets/xzx34/Grid-Bench | Live link |
-| Paper | Added after arXiv publication | "soon" label; no URL invented |
+| Paper | https://arxiv.org/abs/2610.22312 | Live link and full BibTeX |
 
 ## Release scope
 
 Code uses MIT and original data use CC BY 4.0. The data release contains
 benchmark instances, simulator references, and evaluation measurements; it does
 not include collected model answers or predicted grids. Use reference-world
-examples for demonstrations. Add the paper link after arXiv publication.
+examples for demonstrations. The paper is available as arXiv:2610.22312.
 
 ## Site structure
 
@@ -94,10 +94,10 @@ python3 -m http.server 8765
 
 ## Maintenance
 
-- Keep code and dataset links in both resource groups aligned with their public
-  destinations. Leave the paper entry pending until arXiv publication.
-- When the paper is live, add its URL to both Paper entries and its identifier
-  to `BIB_LINES` in `assets/js/use.js`.
+- Keep paper, code, and dataset links in both resource groups aligned with their
+  public destinations.
+- Keep the paper metadata in `index.html` and the full BibTeX in
+  `BIB_LINES` in `assets/js/use.js` aligned with the arXiv record.
 - Confirm exported data match `assets/data/manifest.json` before deployment.
 - Regenerate `assets/img/og-image.png` if the hero changes.
 - Preview changes locally, then push `site-v1` to deploy through GitHub Pages.
